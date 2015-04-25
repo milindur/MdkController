@@ -125,8 +125,8 @@
         <AdvertisingDataGeneralScanResponseBitmapCustom>0</AdvertisingDataGeneralScanResponseBitmapCustom>
         <AdvertisingDataBrodcastScanResponseBitmapCustom>0</AdvertisingDataBrodcastScanResponseBitmapCustom>
         <TxPowerLevelOffset>0</TxPowerLevelOffset>
-        <MinimumConnectionInterval>8</MinimumConnectionInterval>
-        <MaximumConnectionInterval>160</MaximumConnectionInterval>
+        <MinimumConnectionInterval>6</MinimumConnectionInterval>
+        <MaximumConnectionInterval>80</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>200</TimeoutMultipler>
         <AddServiceUpdateCharacteristic>true</AddServiceUpdateCharacteristic>
