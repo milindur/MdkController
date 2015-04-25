@@ -23,6 +23,21 @@
 @brief Implementation of the ACI transport layer module
 */
 
+/* Standard includes. */
+#include <stdio.h>
+
+/* Kernel includes. */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
+
+/* Atmel library includes. */
+#include "asf.h"
+
+#include "trcUser.h"
+#include "trcConfig.h"
+#include "trcHardwarePort.h"
+
 #include <SPI.h>
 #include "hal_platform.h"
 #include "hal_aci_tl.h"
@@ -76,6 +91,8 @@ aci_queue_t    aci_tx_q;
 aci_queue_t    aci_rx_q;
 
 static aci_pins_t	 *a_pins_local_ptr;
+
+static xSemaphoreHandle xSemaphoreIsr;
 
 void m_aci_data_print(hal_aci_data_t *p_data)
 {
@@ -326,8 +343,10 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
   {
     if (aci_debug_print)
     {
+	  taskENTER_CRITICAL();
       SEGGER_RTT_printf(0, "E");
       m_aci_data_print(p_aci_data);
+	  taskEXIT_CRITICAL();
     }
 
     if (was_full && a_pins_local_ptr->interface_is_interrupt)
@@ -356,6 +375,9 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
 
   /* Needs to be called as the first thing for proper intialization*/
   m_aci_pins_set(a_pins);
+  
+  xSemaphoreIsr = xSemaphoreCreateBinary();
+  xTaskCreate(hal_aci_tl_isr_handler_task, "HalAciIsrHdl", 240, NULL, 3, NULL);
 
   /*
   The SPI lines used are mapped directly to the hardware SPI
@@ -430,6 +452,8 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
 
 	NVIC_SetPriority(PIOC_IRQn, 15);
 	NVIC_EnableIRQ(PIOC_IRQn);
+	
+	vTraceSetISRProperties(4, "BleIsrHdl", 15);
 
     ioport_set_pin_level(a_pins->reqn_pin, 0);
     delay_us(1);
@@ -458,8 +482,10 @@ bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
 
     if (aci_debug_print)
     {
+	  taskENTER_CRITICAL();
       SEGGER_RTT_printf(0, "C"); //ACI Command
       m_aci_data_print(p_aci_cmd);
+	  taskEXIT_CRITICAL();
     }
   }
 
@@ -515,11 +541,31 @@ void hal_aci_tl_q_flush (void)
 
 void m_aci_isr_hal(uint32_t id, uint32_t mask)
 {
+	//vTraceStoreISRBegin(4);
+	
 	if (ioport_get_pin_level(a_pins_local_ptr->rdyn_pin))
 	{
 		SEGGER_RTT_printf(0, "invalid irq\n");
 		return;
 	}
 	
-	m_aci_isr();
+	//m_aci_isr();
+	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+	xSemaphoreGiveFromISR(xSemaphoreIsr, &xHigherPriorityTaskWoken);
+	
+	//vTraceStoreISREnd(1);
+}
+
+void hal_aci_tl_isr_handler_task(void *pvParameters)
+{
+	UNUSED(pvParameters);
+	
+	xSemaphoreTake(xSemaphoreIsr, 0);
+	
+	for (;;)
+	{
+		xSemaphoreTake(xSemaphoreIsr, portMAX_DELAY);
+		
+		m_aci_isr();
+	}
 }

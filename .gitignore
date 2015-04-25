@@ -1,3 +1,4 @@
 *.atsuo
-Debug/
 *.log
+Debug/
+Release/

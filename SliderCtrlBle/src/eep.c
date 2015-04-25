@@ -1,82 +1,88 @@
 #include <string.h>
+
+#include "asf.h"
+
 #include "sm.h"
 #include "eep.h"
 
-#define EEP_VERSION 0x0100
+#define EEP_VERSION 0x0101
 #define EEP_CHECK   0xaa55
 
+#define EEP_BASE_ADDRESS 0x000FFC00
+
 const eep_params_t eep_params_def = {
-	EEP_VERSION,
-	EEP_CHECK,
-	0xffff,
-	0xffff,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0xffff,
-	0xffff,
-	0xffff,
-	0xffff,
-	0xffff,
-	0xffff,
-	0xffff,
-	6*SM_SPR,                   // accel steps/s^2
-	6*SM_SPR,                   // decel steps/s^2
-	4*SM_SPR,                   // speed steps/s
-	1,							// power save
-	0,							// motor reverse
-	0xffff,
-	0xffff,
-	0xffff,
-	0xffff,
-	100,			// pre time
-	100,			// focus time
-	100,			// exposure time
-	100,			// post time
-	0xffff,
-	0xffff,
-	0xffff,
-	0xff,
-	1,				// optimize acceleration
-    2000,           // interval
-    300,            // count
-    0,              // start position
-    0,              // end position,
-	0,              // ramp count
-	0,              // stall count
-	0xffff,
-	0xffff,
-	100,			// lcd backlight full brightness
-	50,				// lcd backlight reduced brightness
-	10,				// lcd backlight reduce time
-	60				// lcd backlight off time
+	.version = EEP_VERSION,
+	.check = EEP_CHECK,
+	.sm[0] = {
+		.microsteps = 16,
+		.accel_steps = 5*SM_SPR,
+		.decel_steps = 5*SM_SPR,
+		.speed_max_steps = 3*SM_SPR,
+		.motor_reverse = 0,
+		.power_save = 1
+	},
+	.sm[1] = {
+		.microsteps = 16,
+		.accel_steps = 5*SM_SPR,
+		.decel_steps = 5*SM_SPR,
+		.speed_max_steps = 3*SM_SPR,
+		.motor_reverse = 0,
+		.power_save = 1
+	},
+	.sm[2] = {
+		.microsteps = 16,
+		.accel_steps = 5*SM_SPR,
+		.decel_steps = 5*SM_SPR,
+		.speed_max_steps = 3*SM_SPR,
+		.motor_reverse = 0,
+		.power_save = 1
+	},
+	.slider_pre_time = 100,
+	.slider_focus_time = 100,
+	.slider_exposure_time = 100,
+	.slider_post_time = 100,
+	.slider_optimize_accel = 1,
+	.slider_interval = 8000,
+	.slider_count = 50,
+	.slider_ramp_count = 0,
+	.slider_stall_count = 0,
+	.slider_positions[0] = {
+		.pos = { 0, 0, 0 }	
+	},
+	.slider_positions[1] = {
+		.pos = { 0, 0, 0 }
+	},
+	.slider_positions[2] = {
+		.pos = { 0, 0, 0 }
+	}
 };
-eep_params_t eep_params_ee;
 eep_params_t eep_params;
 
-void eep_init(void)
+void vEepInit(void)
 {
-    eep_load();
+	if (nvm_init(INT_FLASH) != STATUS_OK)
+	{
+		for (;;) {}
+	}
+    vEepLoad();
 }
 
-void eep_save(void)
+void vEepSave(void)
 {
-	//eeprom_write_block(&eep_params, &eep_params_ee, sizeof(eep_params_t));
+	//nvm_write(INT_FLASH, EEP_BASE_ADDRESS + 0, &eep_params, sizeof(eep_params_t));
 }
 
-void eep_load(void)
+void vEepLoad(void)
 {
-    //eeprom_read_block(&eep_params, &eep_params_ee, sizeof(eep_params_t));
+	nvm_read(INT_FLASH, EEP_BASE_ADDRESS + 0, (void *)&eep_params, sizeof(eep_params_t));
 	//if (eep_params.version != EEP_VERSION || eep_params.check != EEP_CHECK)
 	{
-		eep_load_default();
-		eep_save();
+		vEepLoadDefault();
+		vEepSave();
 	}
 }
 
-void eep_load_default(void)
+void vEepLoadDefault(void)
 {
 	memcpy(&eep_params, &eep_params_def, sizeof(eep_params_t));
 }

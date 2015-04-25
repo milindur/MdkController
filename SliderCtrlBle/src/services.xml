@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE AttributeServer>
 <Profile Version="1.3">
-    <SetupId>0</SetupId>
+    <SetupId>2</SetupId>
     <Device>nRF8001_Dx</Device>
     <Service Type="local" PrimaryService="true">
         <Name>Device Information</Name>
@@ -142,133 +142,49 @@
             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
             <PeriodForProperties/>
         </Characteristic>
+    </Service>
+    <Service Type="local" PrimaryService="true">
+        <Name>NMX</Name>
+        <Uuid BaseUUID="B8E0000062AD41BA9231206AE80AB550" BaseUUIDName="NMX Legacy Service Base">6067</Uuid>
         <Characteristic>
-            <Name>Slider Program</Name>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1014</Uuid>
+            <Name>NMX TX</Name>
+            <Uuid BaseUUID="F8970000AEE847678ECCCC694FD5FCEE" BaseUUIDName="NMX Legacy RX Base">177b</Uuid>
             <DefaultValue></DefaultValue>
             <UsePresentationFormat>0</UsePresentationFormat>
-            <MaxDataLength>12</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
+            <MaxDataLength>20</MaxDataLength>
+            <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <ForceEncryption>false</ForceEncryption>
             <Properties>
                 <WriteWithoutResponse>false</WriteWithoutResponse>
-                <Write>true</Write>
-                <Notify>false</Notify>
+                <Write>false</Write>
+                <Notify>true</Notify>
                 <Indicate>false</Indicate>
                 <Broadcast>false</Broadcast>
             </Properties>
             <SetPipe>true</SetPipe>
-            <AckIsAuto>true</AckIsAuto>
+            <AckIsAuto>false</AckIsAuto>
             <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
             <PeriodForProperties/>
         </Characteristic>
         <Characteristic>
-            <Name>Slider Camera Config</Name>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1021</Uuid>
+            <Name>NMX RX</Name>
+            <Uuid BaseUUID="BF450000DE2A4BC8BBA0E5D6065F1B4B" BaseUUIDName="NMX Legacy TX Base">e40a</Uuid>
             <DefaultValue></DefaultValue>
             <UsePresentationFormat>0</UsePresentationFormat>
-            <MaxDataLength>16</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
+            <MaxDataLength>20</MaxDataLength>
+            <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <ForceEncryption>false</ForceEncryption>
             <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
+                <WriteWithoutResponse>true</WriteWithoutResponse>
                 <Write>true</Write>
                 <Notify>false</Notify>
                 <Indicate>false</Indicate>
                 <Broadcast>false</Broadcast>
             </Properties>
-            <SetPipe>true</SetPipe>
-            <AckIsAuto>true</AckIsAuto>
-            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
-            <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
-            <PeriodForProperties/>
-        </Characteristic>
-        <Characteristic>
-            <Name>Slider Motor 1 Config</Name>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1031</Uuid>
-            <DefaultValue></DefaultValue>
-            <UsePresentationFormat>0</UsePresentationFormat>
-            <MaxDataLength>7</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
-            <ForceOpen>false</ForceOpen>
-            <ForceEncryption>false</ForceEncryption>
-            <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
-                <Write>true</Write>
-                <Notify>false</Notify>
-                <Indicate>false</Indicate>
-                <Broadcast>false</Broadcast>
-            </Properties>
-            <SetPipe>true</SetPipe>
-            <AckIsAuto>true</AckIsAuto>
-            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
-            <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
-            <PeriodForProperties/>
-        </Characteristic>
-        <Characteristic>
-            <Name>Slider Motor 2 Config</Name>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1032</Uuid>
-            <DefaultValue></DefaultValue>
-            <UsePresentationFormat>0</UsePresentationFormat>
-            <MaxDataLength>7</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
-            <ForceOpen>false</ForceOpen>
-            <ForceEncryption>false</ForceEncryption>
-            <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
-                <Write>true</Write>
-                <Notify>false</Notify>
-                <Indicate>false</Indicate>
-                <Broadcast>false</Broadcast>
-            </Properties>
-            <SetPipe>true</SetPipe>
-            <AckIsAuto>true</AckIsAuto>
-            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
-            <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
-            <PeriodForProperties/>
-        </Characteristic>
-        <Characteristic>
-            <Name>Slider Motor 3 Config</Name>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1033</Uuid>
-            <DefaultValue></DefaultValue>
-            <UsePresentationFormat>0</UsePresentationFormat>
-            <MaxDataLength>7</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
-            <ForceOpen>false</ForceOpen>
-            <ForceEncryption>false</ForceEncryption>
-            <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
-                <Write>true</Write>
-                <Notify>false</Notify>
-                <Indicate>false</Indicate>
-                <Broadcast>false</Broadcast>
-            </Properties>
-            <SetPipe>true</SetPipe>
-            <AckIsAuto>true</AckIsAuto>
-            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
-            <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
-            <PeriodForProperties/>
-        </Characteristic>
-        <Characteristic>
-            <Name>Slider Motor 4 Config</Name>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1034</Uuid>
-            <DefaultValue></DefaultValue>
-            <UsePresentationFormat>0</UsePresentationFormat>
-            <MaxDataLength>7</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
-            <ForceOpen>false</ForceOpen>
-            <ForceEncryption>false</ForceEncryption>
-            <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
-                <Write>true</Write>
-                <Notify>false</Notify>
-                <Indicate>false</Indicate>
-                <Broadcast>false</Broadcast>
-            </Properties>
-            <SetPipe>true</SetPipe>
+            <SetPipe>false</SetPipe>
             <AckIsAuto>true</AckIsAuto>
             <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
@@ -277,14 +193,14 @@
     </Service>
     <Gapsettings>
         <Name>SliderCtrl</Name>
-        <DeviceNameWriteLength>0</DeviceNameWriteLength>
-        <LocalPipeOnDeviceName>false</LocalPipeOnDeviceName>
+        <DeviceNameWriteLength>10</DeviceNameWriteLength>
+        <LocalPipeOnDeviceName>true</LocalPipeOnDeviceName>
         <DeviceNameShortLength>6</DeviceNameShortLength>
         <Apperance>0000</Apperance>
         <SecurityLevel>0</SecurityLevel>
         <AuthenticationReq>0</AuthenticationReq>
         <IoCapabilities>0</IoCapabilities>
-        <BondTimeout>600</BondTimeout>
+        <BondTimeout>0</BondTimeout>
         <SecurityRequestDelay>10</SecurityRequestDelay>
         <MinimumKeySize>7</MinimumKeySize>
         <MaximumKeySize>16</MaximumKeySize>
@@ -301,15 +217,15 @@
         <AdvertisingDataGeneralScanResponseBitmapCustom>0</AdvertisingDataGeneralScanResponseBitmapCustom>
         <AdvertisingDataBrodcastScanResponseBitmapCustom>0</AdvertisingDataBrodcastScanResponseBitmapCustom>
         <TxPowerLevelOffset>0</TxPowerLevelOffset>
-        <MinimumConnectionInterval>65535</MinimumConnectionInterval>
-        <MaximumConnectionInterval>65535</MaximumConnectionInterval>
+        <MinimumConnectionInterval>6</MinimumConnectionInterval>
+        <MaximumConnectionInterval>80</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
-        <TimeoutMultipler>65535</TimeoutMultipler>
-        <AddServiceUpdateCharacteristic>false</AddServiceUpdateCharacteristic>
-        <AddServiceUpdateCharacteristicPipe>false</AddServiceUpdateCharacteristicPipe>
+        <TimeoutMultipler>50</TimeoutMultipler>
+        <AddServiceUpdateCharacteristic>true</AddServiceUpdateCharacteristic>
+        <AddServiceUpdateCharacteristicPipe>true</AddServiceUpdateCharacteristicPipe>
         <TimingChangeDelay>5</TimingChangeDelay>
         <ServiceToAdvertise>
-            <Uuid BaseUUID="315D0000340842EB89C56FC3604181F7" BaseUUIDName="Slider Base UUID">1000</Uuid>
+            <Uuid BaseUUID="B8E0000062AD41BA9231206AE80AB550" BaseUUIDName="NMX Legacy Service Base">6067</Uuid>
         </ServiceToAdvertise>
         <CustomAdTypes/>
     </Gapsettings>

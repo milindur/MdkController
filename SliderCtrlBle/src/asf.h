@@ -59,6 +59,12 @@
 // From module: Delay routines
 #include <delay.h>
 
+// From module: EEFC - Enhanced Embedded Flash Controller
+#include <efc.h>
+
+// From module: Flash - SAM Flash Service API
+#include <flash_efc.h>
+
 // From module: GPIO - General purpose Input/Output
 #include <gpio.h>
 
@@ -70,6 +76,9 @@
 
 // From module: Interrupt management - SAM implementation
 #include <interrupt.h>
+
+// From module: NVM - Non volatile memory access
+#include <common_nvm.h>
 
 // From module: PIO - Parallel Input/Output Controller
 #include <pio.h>

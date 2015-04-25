@@ -40,6 +40,7 @@
           <option id="sam.drivers.spi" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.tc" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.drivers.wdt" value="Add" config="" content-id="Atmel.ASF" />
+          <option id="common.drivers.nvm" value="Add" config="no_extmem" content-id="Atmel.ASF" />
           <option id="common.applications.user_application" value="Add" config="" content-id="Atmel.ASF" />
           <option id="sam.utils.cmsis.sam3x.source.template" value="Add" config="" content-id="Atmel.ASF" />
         </options>
@@ -201,6 +202,13 @@
           <file path="src/Config/conf_sleepmgr.h" framework="" version="3.22.0" source="common\services\sleepmgr\sam\module_config\conf_sleepmgr.h" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/sam/drivers/wdt/wdt.c" framework="" version="3.22.0" source="sam\drivers\wdt\wdt.c" changed="False" content-id="Atmel.ASF" />
           <file path="src/ASF/sam/drivers/wdt/wdt.h" framework="" version="3.22.0" source="sam\drivers\wdt\wdt.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/efc/efc.c" framework="" version="3.22.0" source="sam\drivers\efc\efc.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/drivers/efc/efc.h" framework="" version="3.22.0" source="sam\drivers\efc\efc.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/services/flash_efc/flash_efc.c" framework="" version="3.22.0" source="sam\services\flash_efc\flash_efc.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/sam/services/flash_efc/flash_efc.h" framework="" version="3.22.0" source="sam\services\flash_efc\flash_efc.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/common/drivers/nvm/sam/sam_nvm.c" framework="" version="3.22.0" source="common\drivers\nvm\sam\sam_nvm.c" changed="False" content-id="Atmel.ASF" />
+          <file path="src/ASF/common/drivers/nvm/common_nvm.h" framework="" version="3.22.0" source="common\drivers\nvm\common_nvm.h" changed="False" content-id="Atmel.ASF" />
+          <file path="src/Config/conf_nvm.h" framework="" version="3.22.0" source="common\drivers\nvm\sam\module_config\conf_nvm.h" changed="False" content-id="Atmel.ASF" />
         </files>
         <documentation help="http://asf.atmel.com/docs/3.22.0/common.applications.user_application.arduino_due_x/html/index.html" />
         <offline-documentation help="" />
@@ -288,13 +296,18 @@
       <Value>../src/BLE</Value>
       <Value>../src/FreeRTOS/include</Value>
       <Value>../src/FreeRTOS/portable</Value>
+      <Value>../src/ASF/sam/drivers/efc</Value>
+      <Value>../src/ASF/sam/services/flash_efc</Value>
+      <Value>../src/ASF/common/drivers/nvm</Value>
+      <Value>../src/GenericRecorderLibSrc/Configuration</Value>
+      <Value>../src/GenericRecorderLibSrc/Include</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
-  <armgcc.compiler.optimization.OtherFlags>-fdata-sections</armgcc.compiler.optimization.OtherFlags>
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+  <armgcc.compiler.optimization.PrepareDataForGarbageCollection>True</armgcc.compiler.optimization.PrepareDataForGarbageCollection>
+  <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
-  <armgcc.compiler.miscellaneous.OtherFlags>-pipe -fno-strict-aliasing -Wall -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -std=gnu99 -ffunction-sections -fdata-sections -Wchar-subscripts -Wcomment -Wformat=2 -Wimplicit-int -Wmain -Wparentheses -Wsequence-point -Wreturn-type -Wswitch -Wtrigraphs -Wunused -Wuninitialized -Wunknown-pragmas -Wfloat-equal -Wundef -Wshadow -Wbad-function-cast -Wwrite-strings -Wsign-compare -Waggregate-return  -Wmissing-declarations -Wformat -Wmissing-format-attribute -Wno-deprecated-declarations -Wpacked -Wredundant-decls -Wnested-externs -Wlong-long -Wunreachable-code -Wcast-align --param max-inline-insns-single=500</armgcc.compiler.miscellaneous.OtherFlags>
   <armgcc.linker.libraries.Libraries>
     <ListValues>
       <Value>libarm_cortexM3l_math</Value>
@@ -303,13 +316,12 @@
   </armgcc.linker.libraries.Libraries>
   <armgcc.linker.libraries.LibrarySearchPaths>
     <ListValues>
-      <Value>../cmsis/linkerScripts</Value>
       <Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
     </ListValues>
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
   <armgcc.linker.memorysettings.ExternalRAM />
-  <armgcc.linker.miscellaneous.LinkerFlags>-Wl,--entry=Reset_Handler -Wl,--cref -mthumb -T../src/ASF/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
+  <armgcc.linker.miscellaneous.LinkerFlags>-Wl,--entry=Reset_Handler -Wl,--cref -mthumb -T../src/linker_scripts/flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM3=true -DBOARD=ARDUINO_DUE_X -D__SAM3X8E__ -Dprintf=iprintf -Dscanf=iscanf</armgcc.preprocessingassembler.general.AssemblerFlags>
   <armgcc.preprocessingassembler.general.DefaultIncludePath>False</armgcc.preprocessingassembler.general.DefaultIncludePath>
   <armgcc.preprocessingassembler.general.IncludePaths>
@@ -344,6 +356,9 @@
       <Value>../src/BLE</Value>
       <Value>../src/FreeRTOS/include</Value>
       <Value>../src/FreeRTOS/portable</Value>
+      <Value>../src/ASF/sam/drivers/efc</Value>
+      <Value>../src/ASF/sam/services/flash_efc</Value>
+      <Value>../src/ASF/common/drivers/nvm</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
 </ArmGcc>
@@ -402,6 +417,10 @@
       <Value>../src/FreeRTOS/include</Value>
       <Value>../src/FreeRTOS/portable</Value>
       <Value>../src/GenericRecorderLibSrc/Include</Value>
+      <Value>../src/ASF/sam/drivers/efc</Value>
+      <Value>../src/ASF/sam/services/flash_efc</Value>
+      <Value>../src/ASF/common/drivers/nvm</Value>
+      <Value>../src/GenericRecorderLibSrc/Configuration</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
@@ -417,13 +436,12 @@
   </armgcc.linker.libraries.Libraries>
   <armgcc.linker.libraries.LibrarySearchPaths>
     <ListValues>
-      <Value>../cmsis/linkerScripts</Value>
       <Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
     </ListValues>
   </armgcc.linker.libraries.LibrarySearchPaths>
   <armgcc.linker.optimization.GarbageCollectUnusedSections>True</armgcc.linker.optimization.GarbageCollectUnusedSections>
   <armgcc.linker.memorysettings.ExternalRAM />
-  <armgcc.linker.miscellaneous.LinkerFlags>-Wl,--entry=Reset_Handler -Wl,--cref -mthumb -T../src/ASF/sam/utils/linker_scripts/sam3x/sam3x8/gcc/flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
+  <armgcc.linker.miscellaneous.LinkerFlags>-u _printf_float -Wl,--entry=Reset_Handler -Wl,--cref -mthumb -T../src/linker_scripts/flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM3=true -DBOARD=ARDUINO_DUE_X -D__SAM3X8E__ -Dprintf=iprintf -Dscanf=iscanf</armgcc.preprocessingassembler.general.AssemblerFlags>
   <armgcc.preprocessingassembler.general.DefaultIncludePath>False</armgcc.preprocessingassembler.general.DefaultIncludePath>
@@ -459,6 +477,9 @@
       <Value>../src/BLE</Value>
       <Value>../src/FreeRTOS/include</Value>
       <Value>../src/FreeRTOS/portable</Value>
+      <Value>../src/ASF/sam/drivers/efc</Value>
+      <Value>../src/ASF/sam/services/flash_efc</Value>
+      <Value>../src/ASF/common/drivers/nvm</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -470,6 +491,9 @@
     <Folder Include="src\ASF\" />
     <Folder Include="src\ASF\common\" />
     <Folder Include="src\ASF\common\boards\" />
+    <Folder Include="src\ASF\common\drivers\" />
+    <Folder Include="src\ASF\common\drivers\nvm\" />
+    <Folder Include="src\ASF\common\drivers\nvm\sam\" />
     <Folder Include="src\ASF\common\services\" />
     <Folder Include="src\ASF\common\services\clock\" />
     <Folder Include="src\ASF\common\services\clock\sam3x\" />
@@ -487,11 +511,14 @@
     <Folder Include="src\ASF\sam\boards\" />
     <Folder Include="src\ASF\sam\boards\arduino_due_x\" />
     <Folder Include="src\ASF\sam\drivers\" />
+    <Folder Include="src\ASF\sam\drivers\efc\" />
     <Folder Include="src\ASF\sam\drivers\pio\" />
     <Folder Include="src\ASF\sam\drivers\pmc\" />
     <Folder Include="src\ASF\sam\drivers\spi\" />
     <Folder Include="src\ASF\sam\drivers\tc\" />
     <Folder Include="src\ASF\sam\drivers\wdt\" />
+    <Folder Include="src\ASF\sam\services\" />
+    <Folder Include="src\ASF\sam\services\flash_efc\" />
     <Folder Include="src\ASF\sam\utils\" />
     <Folder Include="src\ASF\sam\utils\cmsis\" />
     <Folder Include="src\ASF\sam\utils\cmsis\sam3x\" />
@@ -521,9 +548,25 @@
     <Folder Include="src\FreeRTOS\" />
     <Folder Include="src\FreeRTOS\include\" />
     <Folder Include="src\FreeRTOS\portable\" />
+    <Folder Include="src\GenericRecorderLibSrc\" />
+    <Folder Include="src\GenericRecorderLibSrc\Configuration" />
+    <Folder Include="src\GenericRecorderLibSrc\Include\" />
+    <Folder Include="src\linker_scripts" />
     <Folder Include="src\RTT\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\utils.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\utils.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\drivers\nvm\common_nvm.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\drivers\nvm\sam\sam_nvm.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\ASF\common\services\sleepmgr\sam\sleepmgr.c">
       <SubType>compile</SubType>
     </Compile>
@@ -533,12 +576,30 @@
     <None Include="src\ASF\common\services\sleepmgr\sam\sleepmgr.h">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="src\ASF\sam\drivers\efc\efc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\drivers\efc\efc.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\ASF\sam\drivers\wdt\wdt.c">
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\sam\drivers\wdt\wdt.h">
       <SubType>compile</SubType>
     </None>
+    <Compile Include="src\ASF\sam\services\flash_efc\flash_efc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\sam\services\flash_efc\flash_efc.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ble.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ble.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\BLE\aci.h">
       <SubType>compile</SubType>
     </Compile>
@@ -591,6 +652,15 @@
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\config\conf_sleepmgr.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\cam.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\cam.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\config\conf_nvm.h">
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\config\FreeRTOSConfig.h">
@@ -662,6 +732,42 @@
     <Compile Include="src\FreeRTOS\timers.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Configuration\trcConfig.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Include\trcBase.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Include\trcHardwarePort.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Include\trcKernel.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Include\trcKernelHooks.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Include\trcTypes.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\Include\trcUser.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\trcBase.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\trcHardwarePort.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\trcKernel.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\trcKernelPortFreeRTOS.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\GenericRecorderLibSrc\trcUser.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\RTT\RTT_Syscalls_GCC.c">
       <SubType>compile</SubType>
     </Compile>
@@ -678,6 +784,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\services.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\slider.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\slider.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\sm.c">
@@ -1152,6 +1264,12 @@
       <SubType>compile</SubType>
     </None>
     <None Include="src\FreeRTOS\readme.txt">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\GenericRecorderLibSrc\readme.txt">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\linker_scripts\flash.ld">
       <SubType>compile</SubType>
     </None>
     <None Include="src\services.xml">
