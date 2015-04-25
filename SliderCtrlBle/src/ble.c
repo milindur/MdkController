@@ -23,6 +23,14 @@
 #include "slider.h"
 #include "utils.h"
 
+#define MOCO_VALUE_BYTE		0
+#define MOCO_VALUE_UINT		1
+#define MOCO_VALUE_INT		2
+#define MOCO_VALUE_LONG		3
+#define MOCO_VALUE_ULONG	4
+#define MOCO_VALUE_FLOAT	5
+#define MOCO_VALUE_STRING	6
+
 #ifdef SERVICES_PIPE_TYPE_MAPPING_CONTENT
 	static services_pipe_type_mapping_t services_pipe_type_mapping[NUMBER_OF_PIPES] = SERVICES_PIPE_TYPE_MAPPING_CONTENT;
 #else
@@ -208,33 +216,62 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Firmware Version\n");
 		
-			uint8_t result[] = { 0, 0, 0, 27 };
-			prbBleUpdateSliderControlPointTx(result, 4);
+			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
+			*(uint32_t *)&result[1] = __builtin_bswap32(27);
+			prbBleUpdateSliderControlPointTx(result, 5);
 			return true;
 		}
 	case 0x65:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Run Status\n");
-			uint8_t result = 0;
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			if (ucSliderGetState() != SLIDER_STATE_STOP)
 			{
-				result = 2;
+				result[1] = 2;
 			}
-			prbBleUpdateSliderControlPointTx(&result, 1);
+			prbBleUpdateSliderControlPointTx(result, 2);
+			return true;
+		}
+	case 0x66:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Run Time\n");
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			*(uint32_t *)&result[1] = __builtin_bswap32(ulSliderGetCurrentTime());
+			prbBleUpdateSliderControlPointTx(result, 5);
 			return true;
 		}
 	case 0x76:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get SMS / Continuous Program Mode\n");
-			uint8_t result = 0;
-			prbBleUpdateSliderControlPointTx(&result, 1);
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
 	case 0x7B:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Program % Complete\n");
-			uint8_t result = ucSliderGetProgress();
-			prbBleUpdateSliderControlPointTx(&result, 1);
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			result[1] = ucSliderGetProgress();
+			prbBleUpdateSliderControlPointTx(result, 2);
+			return true;
+		}
+	case 0x7D:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Total Program Run Time\n");
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			*(uint32_t *)&result[1] = __builtin_bswap32(ulSliderGetOverallTime());
+			prbBleUpdateSliderControlPointTx(result, 5);
+			return true;
+		}
+	case 0x7E:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Total Program Run Time\n");
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			if (ucSliderGetState() == SLIDER_STATE_STOP)
+			{
+				result[1] = 1;
+			}
+			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
 	}
@@ -271,9 +308,10 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 		}
 	case 0x6B:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Get Motor Running\n", motor);
-			uint8_t result = ucSmGetState(motor) != SM_STATE_STOP ? 1 : 0;
-			prbBleUpdateSliderControlPointTx(&result, 1);
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Get Motor Running, res=%d\n", motor, ucSmGetState(motor));
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			result[1] = ucSmGetState(motor) != SM_STATE_STOP ? 1 : 0;
+			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
 	}
@@ -307,15 +345,17 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 	case 0x6C:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Interval\n");
-			uint16_t result = __builtin_bswap16((uint16_t)eep_params.slider_interval);
-			prbBleUpdateSliderControlPointTx((uint8_t *)&result, 2);
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			*(uint32_t *)&result[1] = __builtin_bswap32(eep_params.slider_interval);
+			prbBleUpdateSliderControlPointTx(result, 5);
 			return true;
 		}
 	case 0x6D:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Current Shots\n");
-			uint16_t result = __builtin_bswap16((uint16_t)ulSliderGetCurrentCycle());
-			prbBleUpdateSliderControlPointTx((uint8_t *)&result, 2);
+			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
+			*(uint16_t *)&result[1] = __builtin_bswap16((uint16_t)ulSliderGetCurrentCycle());
+			prbBleUpdateSliderControlPointTx(result, 3);
 			return true;
 		}
 	}
