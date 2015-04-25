@@ -249,7 +249,7 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 		}
 	case 0x7B:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Program % Complete\n");
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Program %% Complete\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = ucSliderGetProgress();
 			prbBleUpdateSliderControlPointTx(result, 2);
