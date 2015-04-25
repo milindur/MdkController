@@ -28,14 +28,11 @@ static int32_t run_steps[SM_MOTORS_USED];
 static uint32_t step_timer;
 static uint32_t interval_timer;
 static uint32_t remaining_step_time;
-//static rtc_t start_time;
-//static rtc_t end_time;
-static rtc_t remaining_time;
-static rtc_t overall_time;
-static rtc_t elapsed_time;
+static uint32_t remaining_time;
+static uint32_t overall_time;
+static uint32_t elapsed_time;
 
-static void slider_ble_tx_callback(void *pvParameters);
-static void slider_control_callback(void *pvParameters);
+static void prvSliderControlCallback(void *pvParameters);
 
 void vSliderInit(void)
 {
@@ -49,21 +46,12 @@ void vSliderInit(void)
 	}
 #endif
 
-	xTimerHandle xBleSliderTxTimer = xTimerCreate(
-		(const char * const) "SliderTxTmr",
-		sliderBLE_TX_TIMER_RATE,
-		pdTRUE,
-		NULL,
-		slider_ble_tx_callback);
-	configASSERT(xBleSliderTxTimer);
-	//xTimerStart(xBleSliderTxTimer, 0);
-
 	xTimerHandle xSliderControlTimer = xTimerCreate(
 		(const char * const) "SliderCtrlTmr",
 		sliderCONTROL_TIMER_RATE,
 		pdTRUE,
 		NULL,
-		slider_control_callback);
+		prvSliderControlCallback);
 	configASSERT(xSliderControlTimer);
 	xTimerStart(xSliderControlTimer, 0);
 }
@@ -121,11 +109,11 @@ void vSliderGetInterval(uint32_t *interval, uint32_t *count, uint16_t *ramp_coun
 
 void vSliderUpdateIntervalToMinimum(void)
 {
-    eep_params.slider_interval = utilsMAX(eep_params.slider_interval, slider_get_minimum_interval(eep_params.slider_pre_time, eep_params.slider_focus_time, eep_params.slider_exposure_time, eep_params.slider_post_time));
+    eep_params.slider_interval = utilsMAX(eep_params.slider_interval, ulSliderGetMinimumInterval(eep_params.slider_pre_time, eep_params.slider_focus_time, eep_params.slider_exposure_time, eep_params.slider_post_time));
     vEepSave();
 }
 
-uint32_t slider_get_minimum_interval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time)
+uint32_t ulSliderGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time)
 {
     return pre_time + focus_time + exposure_time + post_time + 500;
 }
@@ -164,21 +152,9 @@ void vSliderStart()
 		step_timer = 0;
 		interval_timer = 0;
    
-        //start_time = rtc_get_time();
-        slider_calc_time();
+        vSliderCalcTime();
 		
-		uint32_t overall_tmp = eep_params.slider_count * eep_params.slider_interval / 1000UL;
-		    
-		overall_time.seconds = overall_tmp % 60;
-		overall_tmp = overall_tmp / 60;
-		    
-		overall_time.minutes = overall_tmp % 60;
-		overall_tmp = overall_tmp / 60;
-
-		overall_time.hours = overall_tmp % 24;
-		overall_tmp = overall_tmp / 24;
-		    
-		overall_time.day = overall_tmp;
+		overall_time = eep_params.slider_count * eep_params.slider_interval;
 
 		state = SLIDER_STATE_WAKE_SM;
 	}
@@ -189,14 +165,11 @@ void vSliderStop(void)
 {
     taskENTER_CRITICAL();
     {
-		vSmStop(0);
-        vSmEnable(0, 0);
-		vSmStop(1);
-		vSmEnable(1, 0);
-		vSmStop(2);
-		vSmEnable(2, 0);
-		vSmStop(3);
-		vSmEnable(3, 0);
+		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+		{
+			vSmStop(motor);
+			vSmEnable(motor, 0);
+		}
         vCamClear();
 		state = SLIDER_STATE_STOP;
 	}
@@ -255,7 +228,7 @@ uint8_t ucSliderGetProgress(void)
 	return (uint8_t)progress;
 }
 
-uint32_t slider_get_remaining_step_time(void)
+uint32_t ulSliderGetRemainingStepTime(void)
 {
 	uint32_t v;
 	
@@ -268,7 +241,7 @@ uint32_t slider_get_remaining_step_time(void)
 	return v;
 }
 
-uint32_t slider_get_remaining_interval_time(void)
+uint32_t ulSliderGetRemainingIntervalTime(void)
 {
 	uint32_t v = 0;
 	
@@ -284,27 +257,9 @@ uint32_t slider_get_remaining_interval_time(void)
 	return v;
 }
 
-/*rtc_t slider_get_start_time(void)
+uint32_t ulSliderGetRemainingTime(void)
 {
-	return start_time;
-}*/
-
-/*rtc_t slider_get_end_time(void)
-{
-    rtc_t v;
-	
-    taskENTER_CRITICAL();
-	{
-        v = end_time;
-    }
-	taskEXIT_CRITICAL();
-    
-	return v;
-}*/
-
-rtc_t slider_get_remaining_time(void)
-{
-	rtc_t v;
+	uint32_t v;
 	
 	taskENTER_CRITICAL();
 	{
@@ -315,9 +270,9 @@ rtc_t slider_get_remaining_time(void)
 	return v;
 }
 
-rtc_t slider_get_current_time(void)
+uint32_t ulSliderGetCurrentTime(void)
 {
-	rtc_t v;
+	uint32_t v;
 	
 	taskENTER_CRITICAL();
 	{
@@ -328,56 +283,18 @@ rtc_t slider_get_current_time(void)
 	return v;
 }
 
-rtc_t slider_get_overall_time(void)
+uint32_t ulSliderGetOverallTime(void)
 {
 	return overall_time;
 }
 
-void slider_calc_time(void)
+void vSliderCalcTime(void)
 {
-	remaining_time.year = 0;
-	remaining_time.month = 0;
-	remaining_time.day = 0;
-	remaining_time.hours = 0;
-	remaining_time.minutes = 0;
-	remaining_time.seconds = 0;
-    //end_time = rtc_get_time();
-
-    uint32_t remaining_tmp = (eep_params.slider_count - current_loop) * eep_params.slider_interval / 1000UL;
-	uint32_t elapsed_tmp = current_loop * eep_params.slider_interval / 1000UL;
-
-	remaining_tmp -= interval_timer / 1000UL;
-	elapsed_tmp += interval_timer / 1000UL;
-        
-    //end_time.seconds += remaining_tmp % 60;
-    //end_time.minutes += end_time.seconds / 60;
-    //end_time.seconds = end_time.seconds % 60;
-    remaining_time.seconds = remaining_tmp % 60;
-    remaining_tmp = remaining_tmp / 60;
-	elapsed_time.seconds = elapsed_tmp % 60;
-	elapsed_tmp = elapsed_tmp / 60;
-        
-    //end_time.minutes += remaining_tmp % 60;
-    //end_time.hours += end_time.minutes / 60;
-    //end_time.minutes = end_time.minutes % 60;
-    remaining_time.minutes = remaining_tmp % 60;
-    remaining_tmp = remaining_tmp / 60;
-	elapsed_time.minutes = elapsed_tmp % 60;
-	elapsed_tmp = elapsed_tmp / 60;
-
-    //end_time.hours += remaining_tmp % 24;
-    //end_time.day += end_time.hours / 24;
-    //end_time.hours = end_time.hours % 24;
-    remaining_time.hours = remaining_tmp % 24;
-    remaining_tmp = remaining_tmp / 24;
-	elapsed_time.hours = elapsed_tmp % 24;
-	elapsed_tmp = elapsed_tmp / 24;
-	
-	remaining_time.day = remaining_tmp;
-	elapsed_time.day = elapsed_tmp;
+    remaining_time = (eep_params.slider_count - current_loop) * eep_params.slider_interval - interval_timer;
+	elapsed_time = current_loop * eep_params.slider_interval + interval_timer;
 }
 
-static void slider_control_callback(void *pvParameters)
+static void prvSliderControlCallback(void *pvParameters)
 {
 	if (state >= SLIDER_STATE_WAIT_PRE_TIME && state <= SLIDER_STATE_WAIT_INTERVAL)
 	{
@@ -579,28 +496,6 @@ static void slider_control_callback(void *pvParameters)
 			state = SLIDER_STATE_STOP;
 			break;
 	}
-}
 
-static void slider_ble_tx_callback(void *pvParameters)
-{
-	static uint8_t state = 0;
-	
-	UNUSED(pvParameters);
-	
-	if (state == 0)
-	{
-		if (bBleUpdateSliderPositionTx(lSmGetPosition(0), 0, 0, 0)) state++;
-	}
-	if (state == 1)
-	{
-		if (bBleUpdateSliderStateTx(ucSliderGetState(), ucSmGetState(0), 0, 0, 0)) state++;
-	}
-	if (state == 2)
-	{
-		BleSliderCycle_t cycle;
-		cycle.ulElapsedCycles = ulSliderGetOverallCycles() - ulSliderGetRemainingCycles();
-		if (bBleUpdateSliderCycleTx(&cycle)) state++;
-	}
-	
-	state %= 3;
+	vSliderCalcTime();
 }

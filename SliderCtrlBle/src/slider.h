@@ -33,15 +33,6 @@
 #define SLIDER_STATE_SLEEP_SM           13
 
 typedef struct {
-    uint16_t year;
-    uint8_t month;
-    uint8_t day;
-    uint8_t hours;
-    uint8_t minutes;
-    uint8_t seconds;
-} rtc_t;
-
-typedef struct {
 	uint32_t pre_time;
 	uint32_t focus_time;
 	uint32_t exposure_time;
@@ -56,7 +47,7 @@ void vSliderGetStartEnd(int32_t *start, int32_t *end);
 void vSliderSetInterval(uint32_t interval, uint32_t count, uint16_t ramp_count, uint16_t stall_count);
 void vSliderGetInterval(uint32_t *interval, uint32_t *count, uint16_t *ramp_count, uint16_t *stall_count);
 void vSliderUpdateIntervalToMinimum(void);
-uint32_t slider_get_minimum_interval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time);
+uint32_t ulSliderGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time);
 void vSliderStart(void);
 void vSliderStop(void);
 uint8_t ucSliderGetState(void);
@@ -64,13 +55,11 @@ uint32_t ulSliderGetCurrentCycle(void);
 uint32_t ulSliderGetRemainingCycles(void);
 uint32_t ulSliderGetOverallCycles(void);
 uint8_t ucSliderGetProgress(void);
-uint32_t slider_get_remaining_step_time(void);
-uint32_t slider_get_remaining_interval_time(void);
-//rtc_t slider_get_start_time(void);
-//rtc_t slider_get_end_time(void);
-rtc_t slider_get_current_time(void);
-rtc_t slider_get_remaining_time(void);
-rtc_t slider_get_overall_time(void);
-void slider_calc_time(void);
+uint32_t ulSliderGetRemainingStepTime(void);
+uint32_t ulSliderGetRemainingIntervalTime(void);
+uint32_t ulSliderGetCurrentTime(void);
+uint32_t ulSliderGetRemainingTime(void);
+uint32_t ulSliderGetOverallTime(void);
+void vSliderCalcTime(void);
 
 #endif /* SLIDER_H_ */

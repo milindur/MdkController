@@ -67,13 +67,13 @@ void vBleInit(void)
 	aci_state.aci_setup_info.num_setup_msgs		= NB_SETUP_MESSAGES;
 	
 	aci_state.aci_pins.board_name				= BOARD_DEFAULT;
-	aci_state.aci_pins.reqn_pin					= PIO_PC21_IDX;
-	aci_state.aci_pins.rdyn_pin					= PIO_PC22_IDX;
+	aci_state.aci_pins.reqn_pin					= PIO_PC24_IDX;
+	aci_state.aci_pins.rdyn_pin					= PIO_PC23_IDX;
 	aci_state.aci_pins.mosi_pin					= SPI0_MOSI_GPIO;
 	aci_state.aci_pins.miso_pin					= SPI0_MISO_GPIO;
 	aci_state.aci_pins.sck_pin					= SPI0_SPCK_GPIO;
-	aci_state.aci_pins.reset_pin				= PIO_PC23_IDX;
-	aci_state.aci_pins.active_pin				= PIN_UNUSED;
+	aci_state.aci_pins.reset_pin				= PIO_PC22_IDX;
+	aci_state.aci_pins.active_pin				= PIO_PC21_IDX;
 	aci_state.aci_pins.optional_chip_sel_pin	= PIN_UNUSED;
 	aci_state.aci_pins.interface_is_interrupt	= true;
 
@@ -81,95 +81,6 @@ void vBleInit(void)
 
 	xTaskCreate(prvAciEventHandlerTask, "BleAciLoop", 600, NULL, 0, NULL);
 }
-
-bool bBleUpdateSliderStateTx(uint8_t slider_state, uint8_t motor1_state, uint8_t motor2_state, uint8_t motor3_state, uint8_t motor4_state)
-{
-	if (!lib_aci_is_pipe_available(&aci_state, PIPE_SLIDER_SLIDER_STATE_TX))
-	{
-		return true;
-	}
-	
-	if (aci_state.data_credit_available >= 1)
-	{
-		uint8_t buffer[5];
-		buffer[0] = slider_state;
-		buffer[1] = motor1_state;
-		buffer[2] = motor2_state;
-		buffer[3] = motor3_state;
-		buffer[4] = motor4_state;
-		
-		if (lib_aci_send_data(PIPE_SLIDER_SLIDER_STATE_TX, buffer, 5))
-		{
-			aci_state.data_credit_available--;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool bBleUpdateSliderPositionTx(int32_t motor1_position, int32_t motor2_position, int32_t motor3_position, int32_t motor4_position)
-{
-	if (!lib_aci_is_pipe_available(&aci_state, PIPE_SLIDER_SLIDER_POSITION_TX))
-	{
-		return true;
-	}	
-
-	if (aci_state.data_credit_available >= 1)
-	{
-		uint8_t buffer[16];
-		*(int32_t *)&buffer[0] = motor1_position;
-		*(int32_t *)&buffer[4] = motor2_position;
-		*(int32_t *)&buffer[8] = motor3_position;
-		*(int32_t *)&buffer[12] = motor4_position;
-		
-		if (lib_aci_send_data(PIPE_SLIDER_SLIDER_POSITION_TX, buffer, 16))
-		{
-			aci_state.data_credit_available--;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool bBleUpdateSliderCycleTx(BleSliderCycle_t * cycle)
-{
-	if (!lib_aci_is_pipe_available(&aci_state, PIPE_SLIDER_SLIDER_CYCLE_TX))
-	{
-		return true;
-	}
-
-	if (aci_state.data_credit_available >= 1)
-	{
-		if (lib_aci_send_data(PIPE_SLIDER_SLIDER_CYCLE_TX, (uint8_t *)cycle, sizeof(BleSliderCycle_t)))
-		{
-			aci_state.data_credit_available--;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/*bool bBleSetSliderProgram(BleSliderProgram_t * program)
-{
-	if (!lib_aci_is_pipe_available(&aci_state, PIPE_SLIDER_SLIDER_PROGRAM_SET))
-	{
-		return true;
-	}
-
-	if (aci_state.data_credit_available >= 1)
-	{
-		if (lib_aci_send_data(PIPE_SLIDER_SLIDER_PROGRAM_SET, (uint8_t *)program, sizeof(BleSliderProgram_t)))
-		{
-			aci_state.data_credit_available--;
-			return true;
-		}
-	}
-
-	return false;
-}*/
 
 bool prbBleUpdateSliderControlPointTx(uint8_t * data, uint8_t length)
 {
@@ -482,8 +393,7 @@ void prvAciEventHandlerTask(void *pvParameters)
 					/* check if the peer has subscribed to the Heart Rate Measurement Characteristic for Notifications	*/
 					if (!timing_change_done)
 					{
-						if (lib_aci_is_pipe_available(&aci_state, PIPE_SLIDER_SLIDER_CONTROL_POINT_TX)
-							|| lib_aci_is_pipe_available(&aci_state, PIPE_NMX_NMX_RX_RX)
+						if (lib_aci_is_pipe_available(&aci_state, PIPE_NMX_NMX_RX_RX)
 							|| lib_aci_is_pipe_available(&aci_state, PIPE_NMX_NMX_RX_RX_ACK_AUTO))
 						{
 							/*
@@ -563,21 +473,6 @@ void prvAciEventHandlerTask(void *pvParameters)
 
 				case ACI_EVT_DATA_RECEIVED:
 					SEGGER_RTT_printf(0, "Pipe RX: No %d\n", aci_evt->params.data_received.rx_data.pipe_number);
-					if (PIPE_SLIDER_SLIDER_CONTROL_POINT_RX_ACK_AUTO == aci_evt->params.data_received.rx_data.pipe_number)
-					{
-						uint8_t msglen = aci_evt->len - 2;
-						if (msglen >= 3)
-						{
-							uint8_t * msg = &aci_evt->params.data_received.rx_data.aci_data[0];
-							
-							uint8_t subadr = msg[0];
-							uint8_t cmd = msg[1];
-							uint8_t len = msg[2];
-							uint8_t * data = &msg[3];
-							
-							prbBleProcessSliderControlPointRx(subadr, cmd, data, len);
-						}
-					}
 					if ((PIPE_NMX_NMX_RX_RX == aci_evt->params.data_received.rx_data.pipe_number)
 						|| (PIPE_NMX_NMX_RX_RX_ACK_AUTO == aci_evt->params.data_received.rx_data.pipe_number))
 					{

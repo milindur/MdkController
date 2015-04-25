@@ -12,18 +12,18 @@
 #include "sm.h"
 #include "utils.h"
 
-#define SM_PIN_ENABLE_1   PIO_PB25_IDX
-#define SM_PIN_STEP_1     PIO_PC28_IDX
-#define SM_PIN_DIR_1      PIO_PC26_IDX
-#define SM_PIN_ENABLE_2   PIO_PC25_IDX
-#define SM_PIN_STEP_2     PIO_PC24_IDX
-#define SM_PIN_DIR_2      PIO_PC23_IDX
-#define SM_PIN_ENABLE_3   PIO_PD7_IDX
-#define SM_PIN_STEP_3     PIO_PD8_IDX
-#define SM_PIN_DIR_3      PIO_PB27_IDX
-#define SM_PIN_ENABLE_4   PIO_PA16_IDX
-#define SM_PIN_STEP_4     PIO_PA24_IDX
-#define SM_PIN_DIR_4      PIO_PA23_IDX
+#define SM_PIN_ENABLE_1   PIO_PA15_IDX
+#define SM_PIN_STEP_1     PIO_PB25_IDX
+#define SM_PIN_DIR_1      PIO_PD0_IDX
+#define SM_PIN_ENABLE_2   PIO_PC15_IDX
+#define SM_PIN_STEP_2     PIO_PC26_IDX
+#define SM_PIN_DIR_2      PIO_PC12_IDX
+#define SM_PIN_ENABLE_3   PIO_PD3_IDX
+#define SM_PIN_STEP_3     PIO_PC28_IDX
+#define SM_PIN_DIR_3      PIO_PA7_IDX
+#define SM_PIN_ENABLE_4   PIO_PC19_IDX
+#define SM_PIN_STEP_4     PIO_PC25_IDX
+#define SM_PIN_DIR_4      PIO_PC16_IDX
 
 #define SM_PIN_ENABLE(motor)   SM_PIN_ENABLE_##motor
 #define SM_PIN_STEP(motor)     SM_PIN_STEP_##motor
@@ -94,12 +94,12 @@ void vSmInit(void)
 	_state[0].pin_enable = SM_PIN_ENABLE(1);
 	_state[0].pin_step = SM_PIN_STEP(1);
 	_state[0].pin_dir = SM_PIN_DIR(1);
-	_state[1].pin_enable = SM_PIN_ENABLE(3);
-	_state[1].pin_step = SM_PIN_STEP(3);
-	_state[1].pin_dir = SM_PIN_DIR(3);
-	_state[2].pin_enable = SM_PIN_ENABLE(4);
-	_state[2].pin_step = SM_PIN_STEP(4);
-	_state[2].pin_dir = SM_PIN_DIR(4);
+	_state[1].pin_enable = SM_PIN_ENABLE(2);
+	_state[1].pin_step = SM_PIN_STEP(2);
+	_state[1].pin_dir = SM_PIN_DIR(2);
+	_state[2].pin_enable = SM_PIN_ENABLE(3);
+	_state[2].pin_step = SM_PIN_STEP(3);
+	_state[2].pin_dir = SM_PIN_DIR(3);
 
 	for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 	{
@@ -112,18 +112,17 @@ void vSmInit(void)
 
 		ioport_set_pin_dir(_state[motor].pin_enable, IOPORT_DIR_OUTPUT);
 		ioport_set_pin_mode(_state[motor].pin_enable, 0);
-		ioport_set_pin_dir(_state[motor].pin_step, IOPORT_DIR_OUTPUT);
-		ioport_set_pin_dir(_state[motor].pin_dir, IOPORT_DIR_OUTPUT);
-	
 		ioport_set_pin_level(_state[motor].pin_enable, false);
+
+		ioport_set_pin_dir(_state[motor].pin_step, IOPORT_DIR_OUTPUT);
 		ioport_set_pin_level(_state[motor].pin_step, false);
+
+		ioport_set_pin_dir(_state[motor].pin_dir, IOPORT_DIR_OUTPUT);
 		ioport_set_pin_level(_state[motor].pin_dir, false);
 
-		vSmEnable(motor, 1);
-		delay_ms(2);
 		vSmEnable(motor, 0);
 	}
-	
+
 	NVIC_EnableIRQ(TC0_IRQn);
 	NVIC_EnableIRQ(TC1_IRQn);
 	NVIC_EnableIRQ(TC2_IRQn);
@@ -166,14 +165,10 @@ void vSmEnable(uint8_t motor, uint8_t enable)
 	if (enable)
 	{
 		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_OUTPUT);
-		ioport_set_pin_mode(state->pin_enable, 0);
-		ioport_set_pin_level(state->pin_enable, false);
 	}
 	else
 	{
 		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_INPUT);
-		ioport_set_pin_mode(state->pin_enable, 0);
-		ioport_set_pin_level(state->pin_enable, true);
 	}
 
 	taskEXIT_CRITICAL();
@@ -188,14 +183,10 @@ void prvEnableFromISR(uint8_t motor, uint8_t enable)
 	if (enable)
 	{
 		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_OUTPUT);
-		ioport_set_pin_mode(state->pin_enable, 0);
-		ioport_set_pin_level(state->pin_enable, false);
 	}
 	else
 	{
 		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_INPUT);
-		ioport_set_pin_mode(state->pin_enable, 0);
-		ioport_set_pin_level(state->pin_enable, true);
 	}
 
 	//taskENABLE_INTERRUPTS();
@@ -364,11 +355,6 @@ void prvContinuousControlTask(void *pvParameters)
 				}
 			}
 			taskEXIT_CRITICAL();
-
-			if (/*(int32_t) e != 0 &&*/ motor == 0)
-			{
-				SEGGER_RTT_printf(0, "move cont control: w=%d x=%d e=%d esum=%d ealt=%d y=%d curacc=%d curspd=%d\n", (int32_t) w, (int32_t) x, (int32_t) e, (int32_t) state->cont_esum, (int32_t) state->cont_ealt, (int32_t) y, (int32_t) current_accel, (int32_t) state->speed_cont_current_mrad);
-			}
 
 			state->cont_ealt = e;
 		}
@@ -784,7 +770,6 @@ void prvSmIsrHandler(uint8_t motor)
 				if (cur > 0) state->dir = SM_CW;
 				if (cur < 0) state->dir = SM_CCW;
 				prvStep(motor, state->dir);
-				//SEGGER_RTT_printf(0, "%d", motor);
 			}
 			else
 			{
@@ -801,15 +786,6 @@ void prvSmIsrHandler(uint8_t motor)
 	}
 
 	state->step_delay = new_step_delay;
-	
-	/*if (state->step_delay == 0)
-	{
-		SEGGER_RTT_printf(0, "move timer: %u\r\n", state->step_delay);
-	}*/
-
-	//SEGGER_RTT_printf(0, "move timer: %u %u %u %d %d %d %u\r\n", step_count, state->min_step_delay, state->step_delay, state->accel_decel_step_count, state->accel_val, state->decel_val, state->decel_start);
-	//SEGGER_RTT_printf(0, "move timer: %u\r\n", state->step_delay);
-	//SEGGER_RTT_printf(0, "%d", motor);
 }
 
 void TC0_Handler(void)

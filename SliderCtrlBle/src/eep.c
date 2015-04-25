@@ -43,14 +43,14 @@ const eep_params_t eep_params_def = {
 	.slider_post_time = 100,
 	.slider_optimize_accel = 1,
 	.slider_interval = 8000,
-	.slider_count = 50,
+	.slider_count = 100,
 	.slider_ramp_count = 0,
 	.slider_stall_count = 0,
 	.slider_positions[0] = {
 		.pos = { 0, 0, 0 }	
 	},
 	.slider_positions[1] = {
-		.pos = { 0, 0, 0 }
+		.pos = { 80000, 120000, 160000 }
 	},
 	.slider_positions[2] = {
 		.pos = { 0, 0, 0 }

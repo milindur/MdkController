@@ -26,9 +26,5 @@ typedef struct
 } BleSliderProgram_t;
 
 void vBleInit(void);
-bool bBleUpdateSliderStateTx(uint8_t slider_state, uint8_t motor1_state, uint8_t motor2_state, uint8_t motor3_state, uint8_t motor4_state);
-bool bBleUpdateSliderPositionTx(int32_t motor1_position, int32_t motor2_position, int32_t motor3_position, int32_t motor4_position);
-bool bBleUpdateSliderCycleTx(BleSliderCycle_t * cycle);
-bool bBleSetSliderProgram(BleSliderProgram_t * program);
 
 #endif /* BLE_H_ */
