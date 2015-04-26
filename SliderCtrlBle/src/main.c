@@ -67,18 +67,13 @@ int main(void)
 	xTimerStart(xCheckTimer, 0);
 
 	xTimerHandle xTestTimer = xTimerCreate(
-		(const char * const) "testTmr",
+		(const char * const) "TestTmr",
 		(1500 / portTICK_RATE_MS),
 		pdTRUE,
 		NULL,
 		prvTestTimerCallback);
 	configASSERT(xTestTimer);
 	//xTimerStart(xTestTimer, 0);
-	
-
-	/*ucSmMove(0, 10000);
-	ucSmMove(1, 20000);
-	ucSmMove(2, 30000);*/
 	
 	vTaskStartScheduler();
 	

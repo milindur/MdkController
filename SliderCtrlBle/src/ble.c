@@ -23,6 +23,8 @@
 #include "slider.h"
 #include "utils.h"
 
+#define MOCO_FIRMWARE_VER	30
+
 #define MOCO_VALUE_BYTE		0
 #define MOCO_VALUE_UINT		1
 #define MOCO_VALUE_INT		2
@@ -30,6 +32,11 @@
 #define MOCO_VALUE_ULONG	4
 #define MOCO_VALUE_FLOAT	5
 #define MOCO_VALUE_STRING	6
+
+#define bleJOYSTICK_WATCHDOG_TIMER_RATE		(1000 / portTICK_RATE_MS)
+
+static uint8_t joystick_wdg_enabled;
+static uint8_t joystick_wdg_trigger;
 
 #ifdef SERVICES_PIPE_TYPE_MAPPING_CONTENT
 	static services_pipe_type_mapping_t services_pipe_type_mapping[NUMBER_OF_PIPES] = SERVICES_PIPE_TYPE_MAPPING_CONTENT;
@@ -55,6 +62,7 @@ static bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, u
 static bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length);
 static void prvBleUpdateSliderControlPointTxOk(void);
 static void prvAciEventHandlerTask(void *pvParameters);
+static void prvJoystickWatchdogTimerCallback(void *pvParameters);
 
 void vBleInit(void)
 {
@@ -88,6 +96,15 @@ void vBleInit(void)
 	lib_aci_init(&aci_state, true);
 
 	xTaskCreate(prvAciEventHandlerTask, "BleAciLoop", 600, NULL, 0, NULL);
+	
+	xTimerHandle xJoystickWatchdogTimer = xTimerCreate(
+		(const char * const) "BleJoyWdgTmr",
+		bleJOYSTICK_WATCHDOG_TIMER_RATE,
+		pdTRUE,
+		NULL,
+		prvJoystickWatchdogTimerCallback);
+	configASSERT(xJoystickWatchdogTimer);
+	xTimerStart(xJoystickWatchdogTimer, 0);	
 }
 
 bool prbBleUpdateSliderControlPointTx(uint8_t * data, uint8_t length)
@@ -161,22 +178,35 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x0A:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Move Home\n");
-			ucSmMove(0, -lSmGetPosition(0));
-			ucSmMove(1, -lSmGetPosition(1));
-			ucSmMove(2, -lSmGetPosition(2));
+			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+			{
+				if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
+				if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
+				ucSmMove(motor, -lSmGetPosition(motor));
+			}
 						
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x0E:
+		{
+			uint8_t enable = data[0];
+			SEGGER_RTT_printf(0, "Slider Control RX: Set Joystick Watchdog %d\n", enable);
+			joystick_wdg_enabled = enable;
+			joystick_wdg_trigger = 0;
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
 		}
 	case 0x19:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Move Start Point\n");
-			int32_t steps = eep_params.slider_positions[0].pos[0] - lSmGetPosition(0);
-			ucSmMove(0, steps);
-			steps = eep_params.slider_positions[0].pos[1] - lSmGetPosition(1);
-			ucSmMove(1, steps);
-			steps = eep_params.slider_positions[0].pos[2] - lSmGetPosition(2);
-			ucSmMove(2, steps);
+			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+			{
+				if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
+				if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
+				int32_t steps = eep_params.slider_positions[0].pos[motor] - lSmGetPosition(motor);
+				ucSmMove(motor, steps);
+			}
 						
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -184,9 +214,10 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x1A:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Set Program Start Point\n");
-			eep_params.slider_positions[0].pos[0] = lSmGetPosition(0);
-			eep_params.slider_positions[0].pos[1] = lSmGetPosition(1);
-			eep_params.slider_positions[0].pos[2] = lSmGetPosition(2);
+			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+			{
+				eep_params.slider_positions[0].pos[motor] = lSmGetPosition(motor);
+			}
 			
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -194,9 +225,10 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x1B:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Set Program End Point\n");
-			eep_params.slider_positions[1].pos[0] = lSmGetPosition(0);
-			eep_params.slider_positions[1].pos[1] = lSmGetPosition(1);
-			eep_params.slider_positions[1].pos[2] = lSmGetPosition(2);
+			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+			{
+				eep_params.slider_positions[1].pos[motor] = lSmGetPosition(motor);
+			}
 						
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -205,9 +237,10 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Swap Program Start/End Points\n");
 			
-			vUtilsSwap(&eep_params.slider_positions[0].pos[0], &eep_params.slider_positions[1].pos[0]);
-			vUtilsSwap(&eep_params.slider_positions[0].pos[1], &eep_params.slider_positions[1].pos[1]);
-			vUtilsSwap(&eep_params.slider_positions[0].pos[2], &eep_params.slider_positions[1].pos[2]);
+			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+			{
+				vUtilsSwap(&eep_params.slider_positions[0].pos[motor], &eep_params.slider_positions[1].pos[motor]);
+			}
 						
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -215,9 +248,8 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x64:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Firmware Version\n");
-		
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-			*(uint32_t *)&result[1] = __builtin_bswap32(27);
+			*(uint32_t *)&result[1] = __builtin_bswap32(MOCO_FIRMWARE_VER);
 			prbBleUpdateSliderControlPointTx(result, 5);
 			return true;
 		}
@@ -244,6 +276,15 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get SMS / Continuous Program Mode\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			prbBleUpdateSliderControlPointTx(result, 2);
+			return true;
+		}
+	case 0x7A:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Joystick Watchdog Mode Status\n");
+			joystick_wdg_trigger = 0;
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			result[1] = joystick_wdg_enabled;
 			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
@@ -301,7 +342,9 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			sprintf(buffer, "%.3f", speed);
 			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Move Continuous %s\n", motor, buffer);
 			
-			bSmMoveContinuous(motor, (int32_t) speed);
+			if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
+			if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
+			bSmMoveContinuous(motor, (int32_t) (speed * 2.5f));
 		
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -567,4 +610,24 @@ void prvAciEventHandlerTask(void *pvParameters)
 			}
 		}
 	}
+}
+
+static void prvJoystickWatchdogTimerCallback(void *pvParameters)
+{
+	static uint8_t last_joystick_wdg_trigger = 0;
+	
+	UNUSED(pvParameters);
+
+	if (joystick_wdg_trigger && (last_joystick_wdg_trigger != joystick_wdg_trigger))
+	{
+		SEGGER_RTT_printf(0, "Joystick Watchdog Triggered! Stopping Motors...\n");
+		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+		{
+			vSmStop(motor);
+			if (eep_params.sm[motor].power_save != 2) vSmEnable(motor, 0);
+		}
+	}
+	
+	last_joystick_wdg_trigger = joystick_wdg_trigger;
+	joystick_wdg_trigger = 1;
 }
