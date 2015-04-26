@@ -53,7 +53,7 @@
     </Service>
     <Service Type="local" PrimaryService="true">
         <Name>NMX</Name>
-        <Uuid BaseUUID="B8E0000062AD41BA9231206AE80AB550" BaseUUIDName="NMX Legacy Service Base">6067</Uuid>
+        <Uuid BaseUUID="a3a90000c0fd4a5cb191bff60a7f9ea7" BaseUUIDName="NMX Service Base">eb86</Uuid>
         <Characteristic>
             <Name>NMX TX</Name>
             <Uuid BaseUUID="F8970000AEE847678ECCCC694FD5FCEE" BaseUUIDName="NMX Legacy RX Base">177b</Uuid>
@@ -126,14 +126,14 @@
         <AdvertisingDataBrodcastScanResponseBitmapCustom>0</AdvertisingDataBrodcastScanResponseBitmapCustom>
         <TxPowerLevelOffset>0</TxPowerLevelOffset>
         <MinimumConnectionInterval>6</MinimumConnectionInterval>
-        <MaximumConnectionInterval>80</MaximumConnectionInterval>
+        <MaximumConnectionInterval>40</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>200</TimeoutMultipler>
         <AddServiceUpdateCharacteristic>true</AddServiceUpdateCharacteristic>
         <AddServiceUpdateCharacteristicPipe>true</AddServiceUpdateCharacteristicPipe>
         <TimingChangeDelay>5</TimingChangeDelay>
         <ServiceToAdvertise>
-            <Uuid BaseUUID="B8E0000062AD41BA9231206AE80AB550" BaseUUIDName="NMX Legacy Service Base">6067</Uuid>
+            <Uuid BaseUUID="a3a90000c0fd4a5cb191bff60a7f9ea7" BaseUUIDName="NMX Service Base">eb86</Uuid>
         </ServiceToAdvertise>
         <CustomAdTypes/>
     </Gapsettings>
