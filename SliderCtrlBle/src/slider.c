@@ -379,6 +379,15 @@ static void prvSliderControlCallback(void *pvParameters)
 			break;
 		case SLIDER_STATE_MOVE:
             {
+				// calculate available time for slider movement
+				int32_t avail_move_time = eep_params.slider_interval - (eep_params.slider_pre_time + eep_params.slider_post_time + eep_params.slider_focus_time + eep_params.slider_exposure_time);
+				
+				// reduce used time on ~90% and divide by 2 (for acceleration and deceleration)
+				avail_move_time = avail_move_time * 90 / 200;
+
+				// sanity check
+				if (avail_move_time < 100) avail_move_time = 100;
+
 				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
 					int32_t steps = 0;
@@ -422,20 +431,11 @@ static void prvSliderControlCallback(void *pvParameters)
 				
 					if (eep_params.slider_optimize_accel)
 					{
-						// calculate available time for slider movement
-						int32_t avail_move_time = eep_params.slider_interval - (eep_params.slider_pre_time + eep_params.slider_post_time + eep_params.slider_focus_time + eep_params.slider_exposure_time);
-				
-						// reduce used time on ~90% and divide by 2 (for acceleration and deceleration)
-						avail_move_time = avail_move_time * 90 / 200;
-
-						// sanity check
-						if (avail_move_time < 100) avail_move_time = 100;
-				
 						// calculate optimal acceleration
 						uint16_t accel = SM_STEPS_TO_MRAD(labs(steps)) * 1000000UL / (avail_move_time * avail_move_time);
 				
 						accel = utilsMIN(accel, SM_STEPS_TO_MRAD(eep_params.sm[motor].accel_steps));
-						accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/4));
+						accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/16));
 								
 						ucSmMoveEx(motor, steps, SM_STEPS_TO_MRAD(eep_params.sm[motor].speed_max_steps), accel, accel);
 					}
