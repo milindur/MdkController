@@ -249,8 +249,15 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 			state->run_state = SM_STATE_CONT;
 			state->speed_cont_current_mrad = 0;
 			state->speed_cont_target_mrad = speed_mrad;
-			state->step_delay = A_T_x1000 / SM_STEPS_TO_MRAD(0.5*SM_SPR);
-		
+
+			// calculate first step delay
+			uint64_t step_delay_tmp = (T_FREQ_148 * prulFastSqrt(A_SQ / state->accel_mrad)) / 100;
+			if (step_delay_tmp > INT32_MAX)
+			{
+				step_delay_tmp = INT32_MAX;
+			}
+			state->step_delay = step_delay_tmp;
+	
 			if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 
 			// Run Timer/Counter.
