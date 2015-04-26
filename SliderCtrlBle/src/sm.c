@@ -82,7 +82,7 @@ static sm_state_t _state[SM_MOTORS_USED];
 
 static uint32_t prulFastSqrt(uint32_t v);
 static inline void prvStep(uint8_t motor, uint8_t dir);
-static inline void prvEnableFromISR(uint8_t motor, uint8_t enable);
+static inline void prvSmEnableFromISR(uint8_t motor, uint8_t enable);
 static void prvContinuousControlTask(void *pvParameters);
 
 void vSmInit(void)
@@ -158,35 +158,35 @@ void vSmReload(void)
 
 void vSmEnable(uint8_t motor, uint8_t enable)
 {
-	sm_state_t * state = &_state[motor];
-
 	taskENTER_CRITICAL();
 	
-	if (enable)
-	{
-		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_OUTPUT);
-	}
-	else
-	{
-		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_INPUT);
-	}
+	prvSmEnableFromISR(motor, enable);
 
 	taskEXIT_CRITICAL();
 }
 
-void prvEnableFromISR(uint8_t motor, uint8_t enable)
+void prvSmEnableFromISR(uint8_t motor, uint8_t enable)
 {
 	sm_state_t * state = &_state[motor];
 
 	//taskDISABLE_INTERRUPTS();
 
-	if (enable)
+	if (enable == 2)
 	{
+		// auto power-down
+		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_INPUT);
+	}
+	else if (enable == 1)
+	{
+		// permanent enabled
 		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_OUTPUT);
+		ioport_set_pin_level(state->pin_enable, false);
 	}
 	else
 	{
-		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_INPUT);
+		// permanent disabled
+		ioport_set_pin_dir(state->pin_enable, IOPORT_DIR_OUTPUT);
+		ioport_set_pin_level(state->pin_enable, true);
 	}
 
 	//taskENABLE_INTERRUPTS();
@@ -244,19 +244,19 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 
 	if (sm_state == SM_STATE_STOP)
 	{
-		state->run_state = SM_STATE_CONT;
-		state->speed_cont_current_mrad = 0;
-		state->speed_cont_target_mrad = speed_mrad;
-		state->step_delay = A_T_x1000 / SM_STEPS_TO_MRAD(0.5*SM_SPR);
-		
-		if (eep_params.sm[motor].power_save == 1)
+		if (speed != 0)
 		{
-			vSmEnable(motor, 1);
-		}
+			state->run_state = SM_STATE_CONT;
+			state->speed_cont_current_mrad = 0;
+			state->speed_cont_target_mrad = speed_mrad;
+			state->step_delay = A_T_x1000 / SM_STEPS_TO_MRAD(0.5*SM_SPR);
+		
+			if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 
-		// Run Timer/Counter.
-		tc_write_rc(TC0, motor, 10);
-		tc_start(TC0, motor);
+			// Run Timer/Counter.
+			tc_write_rc(TC0, motor, 10);
+			tc_start(TC0, motor);
+		}
 	}
 	else
 	{
@@ -432,10 +432,7 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 		// Just a short delay so main() can act on 'running'.
 		state->step_delay = 1000;
 
-		if (eep_params.sm[motor].power_save == 1)
-		{
-			vSmEnable(motor, 1);
-		}
+		if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);		
 
 		// Run Timer/Counter.
 		tc_write_rc(TC0, motor, 10);
@@ -509,10 +506,7 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 
 		SEGGER_RTT_printf(0, "move start: %u %u %d %d %d %u\n", state->min_step_delay, state->step_delay, state->accel_decel_step_count, state->accel_val, state->decel_val, state->decel_start);
 
-		if (eep_params.sm[motor].power_save == 1)
-		{
-			vSmEnable(motor, 1);
-		}
+		if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 
 		// Set Timer/Counter.
 		tc_write_rc(TC0, motor, 10);
@@ -700,10 +694,7 @@ void prvSmIsrHandler(uint8_t motor)
 		state->step_count = 0;
 		new_step_delay = 0;
 		state->rest = 0;
-		if (eep_params.sm[motor].power_save == 1)
-		{
-			prvEnableFromISR(motor, 0);
-		}
+		if (eep_params.sm[motor].power_save == 1) prvSmEnableFromISR(motor, 0);
 		tc_stop(TC0, motor);
 		SEGGER_RTT_printf(0, "move timer: stop\r\n");
 		break;
@@ -755,7 +746,7 @@ void prvSmIsrHandler(uint8_t motor)
 			new_step_delay = INT32_MAX;
 		}
 		state->rest = (2 * (int32_t) state->step_delay + state->rest) % (4 * state->accel_decel_step_count + 1);
-		// Check if we at last step
+		// Check if we are at last step
 		if (state->accel_decel_step_count >= 0)
 		{
 			new_step_delay = UINT32_MAX;

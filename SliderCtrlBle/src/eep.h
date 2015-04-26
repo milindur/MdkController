@@ -10,8 +10,8 @@ typedef struct {
 	uint16_t accel_steps;
 	uint16_t decel_steps;
 	uint16_t speed_max_steps;
-	uint8_t power_save:1;
-	uint8_t motor_reverse:1;
+	uint8_t power_save;
+	uint8_t motor_reverse;
 } eep_sm_params_t;
 
 typedef struct {

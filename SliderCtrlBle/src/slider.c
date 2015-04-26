@@ -312,6 +312,7 @@ static void prvSliderControlCallback(void *pvParameters)
 				for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
 				{
 					if (eep_params.sm[m].power_save == 0) vSmEnable(m, 1);
+					if (eep_params.sm[m].power_save == 2) vSmEnable(m, 2);
 				}
 			}
             state = SLIDER_STATE_GOTO_START;
@@ -490,7 +491,7 @@ static void prvSliderControlCallback(void *pvParameters)
 			{
 				for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
 				{
-					if (eep_params.sm[m].power_save == 0) vSmEnable(m, 0);
+					vSmEnable(m, 0);
 				}
 			}
 			state = SLIDER_STATE_STOP;
