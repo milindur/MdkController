@@ -100,10 +100,10 @@
         </Characteristic>
     </Service>
     <Gapsettings>
-        <Name>SliderCtrl</Name>
-        <DeviceNameWriteLength>10</DeviceNameWriteLength>
+        <Name>MDK Pan/Tilt</Name>
+        <DeviceNameWriteLength>12</DeviceNameWriteLength>
         <LocalPipeOnDeviceName>true</LocalPipeOnDeviceName>
-        <DeviceNameShortLength>6</DeviceNameShortLength>
+        <DeviceNameShortLength>1</DeviceNameShortLength>
         <Apperance>0000</Apperance>
         <SecurityLevel>0</SecurityLevel>
         <AuthenticationReq>0</AuthenticationReq>
@@ -116,7 +116,7 @@
         <AdvertisingDataGeneralBitmap>10</AdvertisingDataGeneralBitmap>
         <AdvertisingDataBrodcastBitmap>10</AdvertisingDataBrodcastBitmap>
         <AdvertisingDataBondedScanResponseBitmap>0</AdvertisingDataBondedScanResponseBitmap>
-        <AdvertisingDataGeneralScanResponseBitmap>1a</AdvertisingDataGeneralScanResponseBitmap>
+        <AdvertisingDataGeneralScanResponseBitmap>a</AdvertisingDataGeneralScanResponseBitmap>
         <AdvertisingDataBrodcastScanResponseBitmap>a</AdvertisingDataBrodcastScanResponseBitmap>
         <AdvertisingDataBondedBitmapCustom>0</AdvertisingDataBondedBitmapCustom>
         <AdvertisingDataGeneralBitmapCustom>0</AdvertisingDataGeneralBitmapCustom>
