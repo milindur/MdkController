@@ -324,12 +324,14 @@ void pio_set_io_drive(Pio *p_pio, uint32_t ul_line,
  * \subsection sam_pio_quickstart_use_case_2_example_code Example code
  * Add the following function to your application:
  * \code
-	void pin_edge_handler(void)
+	void pin_edge_handler(const uint32_t id, const uint32_t index)
 	{
-	    if (pio_get(PIOA, PIO_TYPE_PIO_INPUT, PIO_PA16))
-	        pio_clear(PIOA, PIO_PA23);
-	    else
-	        pio_set(PIOA, PIO_PA23);
+		if ((id == ID_PIOA) && (index == PIO_PA16)){
+			if (pio_get(PIOA, PIO_TYPE_PIO_INPUT, PIO_PA16))
+				pio_clear(PIOA, PIO_PA23);
+			else
+				pio_set(PIOA, PIO_PA23);
+		}
 	}
 \endcode
  *

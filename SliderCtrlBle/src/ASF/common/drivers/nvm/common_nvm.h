@@ -119,6 +119,10 @@ status_code_t nvm_read_char(mem_type_t mem, uint32_t address, uint8_t *data);
 /**
  * \brief Write single byte of data.
  *
+ * \note For SAM4S internal flash, the page existed in the address must be erased first
+ *  before written, and the minimum write unit is a page,thus when writing a single
+ *  byte, a whole page that contains the data is writen.
+ *
  * \param mem Type of non volatile memory to write
  * \param address Address to write
  * \param data Data to be written
@@ -141,6 +145,9 @@ status_code_t nvm_read(mem_type_t mem, uint32_t address, void *buffer,
  * \brief Write \a len number of bytes at address \a address in non volatile
  * memory \a mem from the buffer \a buffer
  *
+ * \note For SAM4S internal flash, the page existed in the address must be erased
+ *  first before written.
+ *
  * \param mem Type of non volatile memory to write
  * \param address Address to write
  * \param buffer Pointer to source buffer
@@ -151,6 +158,10 @@ status_code_t nvm_write(mem_type_t mem, uint32_t address, void *buffer,
 
 /**
  * \brief Erase a page in the non volatile memory.
+ *
+ * The function is only available for internal flash and/or userpage signature.
+ *
+ * \note For SAM4S internal flash erase, the minimum erase unit is 8 pages.
  *
  * \param mem Type of non volatile memory to erase
  * \param page_number Page number to erase
