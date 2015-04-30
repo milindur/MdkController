@@ -49,7 +49,10 @@ void vSliderGetInterval(uint32_t *interval, uint32_t *count, uint16_t *ramp_coun
 void vSliderUpdateIntervalToMinimum(void);
 uint32_t ulSliderGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time);
 void vSliderStart(void);
+void vSliderStartCameraTest(void);
+void vSliderStartExposeNow(void);
 void vSliderStop(void);
+bool bSliderGetCameraTestMode(void);
 uint8_t ucSliderGetState(void);
 uint32_t ulSliderGetCurrentCycle(void);
 uint32_t ulSliderGetRemainingCycles(void);

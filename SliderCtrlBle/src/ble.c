@@ -424,9 +424,7 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 	case 0x03:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Expose Now\n");
-			vCamFocus();
-			vCamShutter();
-			//vCamClear();
+			vSliderStartExposeNow();
 		
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -473,6 +471,22 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 			SEGGER_RTT_printf(0, "Slider Control RX: Interval %d\n", interval);
 			eep_params.slider_interval = interval;
 						
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x0B:
+		{
+			uint8_t enable = data[0];
+			SEGGER_RTT_printf(0, "Slider Control RX: Camera Test Mode\n");
+			if (enable)
+			{
+				vSliderStartCameraTest();
+			}
+			else
+			{
+				vSliderStop();				
+			}
+		
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
 		}
@@ -542,6 +556,14 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
 			prbBleUpdateSliderControlPointTx(result, 3);
+			return true;
+		}
+	case 0x6E:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Camera Test Mode\n");
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			result[1] = ucSliderGetState() != SLIDER_STATE_STOP && bSliderGetCameraTestMode() ? 1 : 0;
+			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
 	}
