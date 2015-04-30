@@ -21,6 +21,8 @@ typedef struct {
 typedef struct {
 	uint16_t version;
 	uint16_t check;
+	
+	uint8_t ble_device_name[20];
 
 	eep_sm_params_t sm[SM_MOTORS_USED];
 	

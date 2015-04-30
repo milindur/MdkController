@@ -12,7 +12,8 @@
 
 const eep_params_t eep_params_def = {
 	.version = EEP_VERSION,
-	.check = EEP_CHECK,
+	.check = EEP_CHECK,	
+	.ble_device_name = "MDK Pan/Tilt",
 	.sm[0] = {
 		.microstep_mode = 0xD0,
 		.accel_steps = 6*SM_SPR,
