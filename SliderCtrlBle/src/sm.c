@@ -15,19 +15,32 @@
 #define SM_PIN_ENABLE_1   PIO_PA15_IDX
 #define SM_PIN_STEP_1     PIO_PB25_IDX
 #define SM_PIN_DIR_1      PIO_PD0_IDX
+#define SM_PIN_CFG1_1     PIO_PD1_IDX
+#define SM_PIN_CFG2_1     PIO_PD2_IDX
+
 #define SM_PIN_ENABLE_2   PIO_PC15_IDX
 #define SM_PIN_STEP_2     PIO_PC26_IDX
 #define SM_PIN_DIR_2      PIO_PC12_IDX
+#define SM_PIN_CFG1_2     PIO_PC14_IDX
+#define SM_PIN_CFG2_2     PIO_PC13_IDX
+
 #define SM_PIN_ENABLE_3   PIO_PD3_IDX
 #define SM_PIN_STEP_3     PIO_PC28_IDX
 #define SM_PIN_DIR_3      PIO_PA7_IDX
+#define SM_PIN_CFG1_3     PIO_PD6_IDX
+#define SM_PIN_CFG2_3     PIO_PD9_IDX
+
 #define SM_PIN_ENABLE_4   PIO_PC19_IDX
 #define SM_PIN_STEP_4     PIO_PC25_IDX
 #define SM_PIN_DIR_4      PIO_PC16_IDX
+#define SM_PIN_CFG1_4     PIO_PC18_IDX
+#define SM_PIN_CFG2_4     PIO_PC19_IDX
 
 #define SM_PIN_ENABLE(motor)   SM_PIN_ENABLE_##motor
 #define SM_PIN_STEP(motor)     SM_PIN_STEP_##motor
 #define SM_PIN_DIR(motor)      SM_PIN_DIR_##motor
+#define SM_PIN_CFG1(motor)     SM_PIN_CFG1_##motor
+#define SM_PIN_CFG2(motor)     SM_PIN_CFG2_##motor
 
 #define SM_PIN_DBG			PIO_PC29_IDX
 
@@ -54,6 +67,8 @@ typedef struct
 	uint8_t pin_enable;
 	uint8_t pin_step;
 	uint8_t pin_dir;
+	uint8_t pin_cfg1;
+	uint8_t pin_cfg2;
 	
 	volatile uint8_t run_state:3;
 	volatile uint8_t dir:1;
@@ -94,12 +109,18 @@ void vSmInit(void)
 	_state[0].pin_enable = SM_PIN_ENABLE(1);
 	_state[0].pin_step = SM_PIN_STEP(1);
 	_state[0].pin_dir = SM_PIN_DIR(1);
+	_state[0].pin_cfg1 = SM_PIN_CFG1(1);
+	_state[0].pin_cfg2 = SM_PIN_CFG2(1);
 	_state[1].pin_enable = SM_PIN_ENABLE(2);
 	_state[1].pin_step = SM_PIN_STEP(2);
 	_state[1].pin_dir = SM_PIN_DIR(2);
+	_state[1].pin_cfg1 = SM_PIN_CFG1(2);
+	_state[1].pin_cfg2 = SM_PIN_CFG2(2);
 	_state[2].pin_enable = SM_PIN_ENABLE(3);
 	_state[2].pin_step = SM_PIN_STEP(3);
 	_state[2].pin_dir = SM_PIN_DIR(3);
+	_state[2].pin_cfg1 = SM_PIN_CFG1(3);
+	_state[2].pin_cfg2 = SM_PIN_CFG2(3);
 
 	for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 	{
@@ -120,6 +141,10 @@ void vSmInit(void)
 		ioport_set_pin_dir(_state[motor].pin_dir, IOPORT_DIR_OUTPUT);
 		ioport_set_pin_level(_state[motor].pin_dir, false);
 
+		ioport_set_pin_mode(_state[motor].pin_cfg1, 0);
+		ioport_set_pin_mode(_state[motor].pin_cfg2, 0);
+
+		vSmSetMicrostepMode(motor, eep_params.sm[motor].microstep_mode);
 		vSmEnable(motor, 0);
 	}
 
@@ -140,6 +165,100 @@ void vSmInit(void)
 	vSmReload();
 	
 	xTaskCreate(prvContinuousControlTask, "SmContCtrl", 200, NULL, 1, NULL);
+}
+
+void vSmSetMicrostepMode(uint8_t motor, uint8_t mode)
+{
+	uint8_t sm_state = ucSmGetState(motor);
+	
+	if (sm_state != SM_STATE_STOP)
+	{
+		SEGGER_RTT_printf(0, "change of microstep mode not allowed!\n");
+		return;
+	}
+
+	sm_state_t * state = &_state[motor];
+
+	uint8_t steps = mode & SM_MODE_STEPS_MASK;
+	bool interpolation = (mode & SM_MODE_INTERPOLATION) == SM_MODE_INTERPOLATION;
+	bool stealth = (mode & SM_MODE_STEALTH) == SM_MODE_STEALTH;
+	
+	if (steps == 1)
+	{
+		ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
+		ioport_set_pin_level(state->pin_cfg1, false);
+		ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+		ioport_set_pin_level(state->pin_cfg2, false);
+		return;
+	}
+	if (steps == 2)
+	{
+		if (interpolation)
+		{
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_INPUT);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg2, false);
+		} 
+		else 
+		{
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg1, true);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg2, false);
+		}
+		return;
+	}
+	if (steps == 4)
+	{
+		if (interpolation)
+		{
+			if (stealth)
+			{
+				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
+				ioport_set_pin_level(state->pin_cfg1, true);
+				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_INPUT);
+			}
+			else 
+			{
+				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_INPUT);
+				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+				ioport_set_pin_level(state->pin_cfg2, true);
+			}
+		}
+		else
+		{
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg1, false);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg2, true);
+		}
+		return;
+	}
+	if (steps == 16)
+	{
+		if (interpolation)
+		{
+			if (stealth)
+			{
+				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_INPUT);
+				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_INPUT);
+			}
+			else
+			{
+				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
+				ioport_set_pin_level(state->pin_cfg1, false);
+				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_INPUT);
+			}
+		}
+		else
+		{
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg1, true);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_level(state->pin_cfg2, true);
+		}
+		return;
+	}
 }
 
 void vSmReload(void)

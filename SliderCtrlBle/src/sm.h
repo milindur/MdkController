@@ -27,7 +27,16 @@
 #define SM_STATE_RUN   3
 #define SM_STATE_CONT  4
 
+#define SM_MODE_STEPS_1			1
+#define SM_MODE_STEPS_2			2
+#define SM_MODE_STEPS_4			4
+#define SM_MODE_STEPS_16		16
+#define SM_MODE_STEPS_MASK		0x1F
+#define SM_MODE_INTERPOLATION	0x40
+#define SM_MODE_STEALTH			0x80
+
 void vSmInit();
+void vSmSetMicrostepMode(uint8_t motor, uint8_t mode);
 void vSmReload(void);
 void vSmEnable(uint8_t motor, uint8_t enable);
 void vSmSetParams(uint16_t accel, uint16_t decel, uint16_t speed_max, uint16_t reverse, uint16_t power_save);

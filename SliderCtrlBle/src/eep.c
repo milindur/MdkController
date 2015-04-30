@@ -14,15 +14,15 @@ const eep_params_t eep_params_def = {
 	.version = EEP_VERSION,
 	.check = EEP_CHECK,
 	.sm[0] = {
-		.microsteps = 16,
+		.microstep_mode = 0xD0,
 		.accel_steps = 6*SM_SPR,
 		.decel_steps = 6*SM_SPR,
 		.speed_max_steps = 4*SM_SPR,
-		.motor_reverse = 1,
+		.motor_reverse = 0,
 		.power_save = 2
 	},
 	.sm[1] = {
-		.microsteps = 16,
+		.microstep_mode = 0xD0,
 		.accel_steps = 5*SM_SPR,
 		.decel_steps = 5*SM_SPR,
 		.speed_max_steps = 3*SM_SPR,
@@ -30,14 +30,14 @@ const eep_params_t eep_params_def = {
 		.power_save = 2
 	},
 	.sm[2] = {
-		.microsteps = 16,
+		.microstep_mode = 0xD0,
 		.accel_steps = 5*SM_SPR,
 		.decel_steps = 5*SM_SPR,
 		.speed_max_steps = 3*SM_SPR,
 		.motor_reverse = 0,
 		.power_save = 2
 	},
-	.slider_pre_time = 100,
+	.slider_pre_time = 0,
 	.slider_focus_time = 100,
 	.slider_exposure_time = 100,
 	.slider_post_time = 100,

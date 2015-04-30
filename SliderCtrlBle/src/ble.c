@@ -333,6 +333,26 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
 		}
+	case 0x06:
+		{
+			uint8_t microsteps = data[0];
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Set Microstep Value\n", motor);
+			if (microsteps == 16)
+			{
+				vSmSetMicrostepMode(motor, SM_MODE_STEALTH | SM_MODE_INTERPOLATION | SM_MODE_STEPS_16);
+			}
+			else if (microsteps == 8)
+			{
+				vSmSetMicrostepMode(motor, SM_MODE_INTERPOLATION | SM_MODE_STEPS_16);
+			}
+			else
+			{
+				vSmSetMicrostepMode(motor, SM_MODE_STEPS_16);
+			}
+		
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
 	case 0x0D:
 		{
 			uint32_t tmp = __builtin_bswap32(*(uint32_t *)data);
@@ -347,6 +367,14 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			bSmMoveContinuous(motor, (int32_t) (speed * 2.5f));
 		
 			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x66:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Microstep Value\n", motor);
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			result[1] = eep_params.sm[motor].microstep_mode & SM_MODE_STEPS_MASK;
+			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
 	case 0x6B:

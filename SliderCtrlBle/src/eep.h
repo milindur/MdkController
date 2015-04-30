@@ -6,7 +6,7 @@
 #include "slider.h"
 
 typedef struct {
-	uint16_t microsteps;
+	uint8_t microstep_mode;
 	uint16_t accel_steps;
 	uint16_t decel_steps;
 	uint16_t speed_max_steps;
