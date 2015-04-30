@@ -23,11 +23,8 @@
 
 #define mainCHECK_TIMER_RATE                    (500 / portTICK_RATE_MS)
 
-static traceLabel check_user_event_channel;
-
 static void prvSetupHardware(void);
 static void prvCheckTimerCallback(void *pvParameters);
-static void prvTestTimerCallback(void *pvParameters);
 
 void vApplicationMallocFailedHook(void);
 void vApplicationIdleHook(void);
@@ -52,8 +49,6 @@ int main(void)
 		SEGGER_RTT_printf(0, "Could not start recorder!\n");
 	}
 	
-	check_user_event_channel = xTraceOpenLabel("Chk");
-
 	vEepInit();
 	vCamInit();
 	vIoInit();
@@ -70,15 +65,6 @@ int main(void)
 	configASSERT(xCheckTimer);
 	xTimerStart(xCheckTimer, 0);
 
-	xTimerHandle xTestTimer = xTimerCreate(
-		(const char * const) "TestTmr",
-		(1500 / portTICK_RATE_MS),
-		pdTRUE,
-		NULL,
-		prvTestTimerCallback);
-	configASSERT(xTestTimer);
-	//xTimerStart(xTestTimer, 0);
-	
 	vTaskStartScheduler();
 	
 	for (;;) {}
@@ -88,63 +74,7 @@ static void prvCheckTimerCallback(void *pvParameters)
 {
 	UNUSED(pvParameters);
 	
-	vTracePrintF(check_user_event_channel, "Check: %d", 0);
-	
 	ioport_toggle_pin_level(LED0_GPIO);
-}
-
-static void prvTestTimerCallback(void *pvParameters)
-{
-	static uint8_t state = 0;
-	
-	#define MOTOR 0
-	
-	UNUSED(pvParameters);
-	
-	switch (state)
-	{
-	case 0:
-		bSmMoveContinuous(MOTOR, 1*SM_SPR);
-		bSmMoveContinuous(MOTOR+1, 1*SM_SPR);
-		bSmMoveContinuous(MOTOR+2, 1*SM_SPR);
-		break;
-	case 1:
-		bSmMoveContinuous(MOTOR, 2*SM_SPR);
-		bSmMoveContinuous(MOTOR+1, 2*SM_SPR);
-		bSmMoveContinuous(MOTOR+2, 2*SM_SPR);
-		break;
-	case 2:
-		bSmMoveContinuous(MOTOR, 3*SM_SPR);
-		bSmMoveContinuous(MOTOR+1, 3*SM_SPR);
-		bSmMoveContinuous(MOTOR+2, 3*SM_SPR);
-		break;
-	case 3:
-		bSmMoveContinuous(MOTOR, -1*SM_SPR);
-		bSmMoveContinuous(MOTOR+1, -1*SM_SPR);
-		bSmMoveContinuous(MOTOR+2, -1*SM_SPR);
-		break;
-	case 4:
-		bSmMoveContinuous(MOTOR, -2*SM_SPR);
-		bSmMoveContinuous(MOTOR+1, -2*SM_SPR);
-		bSmMoveContinuous(MOTOR+2, -2*SM_SPR);
-		break;
-	case 5:
-		bSmMoveContinuous(MOTOR, 0);
-		bSmMoveContinuous(MOTOR+1, 0);
-		bSmMoveContinuous(MOTOR+2, 0);
-		break;
-	default:
-		break;
-	}
-	
-	/*if (state == 0)
-	{
-		bSmMoveContinuous(0, 1*SM_SPR);
-		state++;
-	}*/
-	
-	state++;
-	state %= 15;
 }
 
 /*-----------------------------------------------------------*/
