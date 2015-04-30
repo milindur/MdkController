@@ -325,6 +325,15 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 {
 	switch (cmd)
 	{
+	case 0x02:
+		{
+			uint8_t power_save = data[0];
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Motor Sleep %d\n", motor, power_save);
+			eep_params.sm[motor].power_save = power_save == 1 ? 1 : 2;
+		
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
 	case 0x04:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Stop\n", motor);
@@ -385,6 +394,14 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
 		}
+	case 0x75:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Check Motor Sleep State\n", motor);
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			result[1] = eep_params.sm[motor].power_save == 1 ? 1 : 0;
+			prbBleUpdateSliderControlPointTx(result, 2);
+			return true;
+		}
 	}
 
 	prvBleUpdateSliderControlPointTxOk();
@@ -395,12 +412,49 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 {
 	switch (cmd)
 	{
+	case 0x03:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Expose Now\n");
+			vCamFocus();
+			vCamShutter();
+			//vCamClear();
+		
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x04:
+		{
+			uint32_t trigger_time = __builtin_bswap32(*(uint32_t *)data);
+			SEGGER_RTT_printf(0, "Slider Control RX: Trigger Time %d\n", trigger_time);
+			eep_params.slider_exposure_time = trigger_time;
+		
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x05:
+		{
+			uint16_t focus_time = __builtin_bswap16(*(uint16_t *)data);
+			SEGGER_RTT_printf(0, "Slider Control RX: Focus Time %d\n", focus_time);
+			eep_params.slider_focus_time = focus_time;
+		
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
 	case 0x06:
 		{
 			uint16_t count = __builtin_bswap16(*(uint16_t *)data);
 			SEGGER_RTT_printf(0, "Slider Control RX: Max Shots %d\n", count);
 			eep_params.slider_count = count;
 						
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x07:
+		{
+			uint16_t exposure_delay_time = __builtin_bswap16(*(uint16_t *)data);
+			SEGGER_RTT_printf(0, "Slider Control RX: Exposure Delay %d\n", exposure_delay_time);
+			eep_params.slider_post_time = exposure_delay_time;
+		
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
 		}
@@ -411,6 +465,52 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 			eep_params.slider_interval = interval;
 						
 			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
+	case 0x64:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Camera Enable\n");
+			uint8_t result[] = { MOCO_VALUE_BYTE, 1 };
+			prbBleUpdateSliderControlPointTx(result, 2);
+			return true;
+		}
+	case 0x65:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Exposing now?\n");
+			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			prbBleUpdateSliderControlPointTx(result, 2);
+			return true;
+		}
+	case 0x66:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Trigger Time\n");
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			*(uint32_t *)&result[1] = __builtin_bswap32(eep_params.slider_exposure_time);
+			prbBleUpdateSliderControlPointTx(result, 5);
+			return true;
+		}
+	case 0x67:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Focus Time\n");
+			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
+			*(uint16_t *)&result[1] = __builtin_bswap16(eep_params.slider_focus_time);
+			prbBleUpdateSliderControlPointTx(result, 3);
+			return true;
+		}
+	case 0x68:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Max Shots\n");
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			*(uint32_t *)&result[1] = __builtin_bswap32(eep_params.slider_count);
+			prbBleUpdateSliderControlPointTx(result, 5);
+			return true;
+		}
+	case 0x69:
+		{
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Exposure Delay\n");
+			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
+			*(uint16_t *)&result[1] = __builtin_bswap16(eep_params.slider_post_time);
+			prbBleUpdateSliderControlPointTx(result, 3);
 			return true;
 		}
 	case 0x6C:
@@ -472,8 +572,15 @@ void prvAciEventHandlerTask(void *pvParameters)
 								}
 								else
 								{
+									char * name = "MDK Pan/Tilt";
+									lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET, name, strlen(name));
+									char * version = "v0.2.0";
+									lib_aci_set_local_data(&aci_state, PIPE_DEVICE_INFORMATION_SOFTWARE_REVISION_STRING_SET, version, strlen(version));
+									
 									lib_aci_connect(300, 320);
 									SEGGER_RTT_printf(0, "Advertising started\n");
+									
+									
 								}
 								break;
 								
