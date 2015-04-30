@@ -15,6 +15,7 @@
 
 #include "SEGGER_RTT.h"
 #include "eep.h"
+#include "io.h"
 #include "sm.h"
 #include "ble.h"
 #include "slider.h"
@@ -53,6 +54,8 @@ int main(void)
 	check_user_event_channel = xTraceOpenLabel("Chk");
 
 	vEepInit();
+	vCamInit();
+	vIoInit();
 	vSmInit();
 	vBleInit();
 	vSliderInit();

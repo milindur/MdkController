@@ -555,6 +555,12 @@
     <Folder Include="src\RTT\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\io.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\io.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\utils.c">
       <SubType>compile</SubType>
     </Compile>
