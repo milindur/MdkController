@@ -96,7 +96,7 @@ void vBleInit(void)
 	aci_state.aci_pins.optional_chip_sel_pin	= PIN_UNUSED;
 	aci_state.aci_pins.interface_is_interrupt	= true;
 
-	lib_aci_init(&aci_state, true);
+	lib_aci_init(&aci_state, false);
 
 	xTaskCreate(prvAciEventHandlerTask, "BleAciLoop", 600, NULL, 0, NULL);
 	
