@@ -16,6 +16,7 @@
 #include "SEGGER_RTT.h"
 #include "eep.h"
 #include "io.h"
+#include "cam.h"
 #include "sm.h"
 #include "ble.h"
 #include "slider.h"

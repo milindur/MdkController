@@ -1,5 +1,6 @@
 #include "asf.h"
 #include "io.h"
+#include "SEGGER_RTT.h"
 
 #define ioPIN_IN0	PIO_PA23_IDX
 #define ioPIN_IN1	PIO_PA22_IDX

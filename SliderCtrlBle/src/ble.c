@@ -21,7 +21,12 @@
 #include "sm.h"
 #include "ble.h"
 #include "slider.h"
+#include "cam.h"
+#include "io.h"
 #include "utils.h"
+
+#define bleDEVICE_NAME_DEFAULT	"MDK Pan/Tilt"
+#define bleFIRMWARE_VERSION		"v0.2.0"
 
 #define MOCO_FIRMWARE_VER	30
 
@@ -48,8 +53,6 @@ static uint8_t joystick_wdg_trigger;
 static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTENT;
 
 static aci_state_t aci_state;
-static hal_aci_evt_t aci_data;
-static hal_aci_data_t aci_cmd;
 
 static bool radio_ack_pending  = false;
 static bool timing_change_done = false;
@@ -538,6 +541,7 @@ bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_
 void prvAciEventHandlerTask(void *pvParameters)
 {
 	static bool setup_required = false;
+	hal_aci_evt_t aci_data;
 
 	for (;;)
 	{
@@ -572,10 +576,10 @@ void prvAciEventHandlerTask(void *pvParameters)
 								}
 								else
 								{
-									char * name = "MDK Pan/Tilt";
-									lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET, name, strlen(name));
-									char * version = "v0.2.0";
-									lib_aci_set_local_data(&aci_state, PIPE_DEVICE_INFORMATION_SOFTWARE_REVISION_STRING_SET, version, strlen(version));
+									char * name = bleDEVICE_NAME_DEFAULT;
+									lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET, (uint8_t *)name, strlen(name));
+									char * version = bleFIRMWARE_VERSION;
+									lib_aci_set_local_data(&aci_state, PIPE_DEVICE_INFORMATION_SOFTWARE_REVISION_STRING_SET, (uint8_t *)version, strlen(version));
 									
 									lib_aci_connect(300, 320);
 									SEGGER_RTT_printf(0, "Advertising started\n");
