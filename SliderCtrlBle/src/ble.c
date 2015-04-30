@@ -220,6 +220,7 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
 				eep_params.slider_positions[0].pos[motor] = lSmGetPosition(motor);
+				SEGGER_RTT_printf(0, "Slider Control RX: Set Program Start Point %d: %d\n", motor, lSmGetPosition(motor));
 			}
 			
 			prvBleUpdateSliderControlPointTxOk();
@@ -231,6 +232,7 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
 				eep_params.slider_positions[1].pos[motor] = lSmGetPosition(motor);
+				SEGGER_RTT_printf(0, "Slider Control RX: Set Program End Point %d: %d\n", motor, lSmGetPosition(motor));
 			}
 						
 			prvBleUpdateSliderControlPointTxOk();
