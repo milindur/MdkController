@@ -354,7 +354,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 		if (speed_mrad < -1 * (int32_t) state->speed_max_mrad) speed_mrad = -1 * (int32_t) state->speed_max_mrad;
 	}
 		 
-	SEGGER_RTT_printf(0, "move cont: %d\n", speed_mrad);
+	SEGGER_RTT_printf(0, "move cont [%d]: %d\n", motor, speed_mrad);
 
 	if (sm_state == SM_STATE_STOP)
 	{
@@ -484,18 +484,6 @@ void prvContinuousControlTask(void *pvParameters)
 	}
 }
 
-uint8_t ucSmStart(uint8_t motor, uint8_t dir)
-{
-	if (dir == CW)
-	{
-		return ucSmMove(motor, INT32_MAX);
-	}
-	else
-	{
-		return ucSmMove(motor, INT32_MIN + 1);
-	}
-}
-
 uint8_t ucSmMove(uint8_t motor, int32_t step)
 {
 	return ucSmMoveEx(motor, step, _state[motor].speed_max_mrad, _state[motor].accel_mrad, _state[motor].decel_mrad);
@@ -510,7 +498,7 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 	
 	sm_state_t * state = &_state[motor];
 
-	SEGGER_RTT_printf(0, "move: %d %u %u %u\n", step, speed, accel, decel);
+	SEGGER_RTT_printf(0, "move [%d]: %d %u %u %u\n", motor, step, speed, accel, decel);
 
 	int32_t max_s_lim;
 	int32_t accel_lim;
@@ -521,26 +509,10 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 	{
 		state->dir = CCW;
 		step = -step;
-		if (!eep_params.sm[motor].motor_reverse)
-		{
-			ioport_set_pin_level(state->pin_dir, false);
-		}
-		else
-		{
-			ioport_set_pin_level(state->pin_dir, true);
-		}
 	}
 	else
 	{
 		state->dir = CW;
-		if (!eep_params.sm[motor].motor_reverse)
-		{
-			ioport_set_pin_level(state->pin_dir, true);
-		}
-		else
-		{
-			ioport_set_pin_level(state->pin_dir, false);
-		}
 	}
 
 	// If moving only 1 step.
@@ -625,9 +597,9 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 		// Reset counter.
 		state->accel_decel_step_count = 0;
 
-		SEGGER_RTT_printf(0, "move start: %u %u %d %d %d %u\n", state->min_step_delay, state->step_delay, state->accel_decel_step_count, state->accel_val, state->decel_val, state->decel_start);
 
 		if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
+		SEGGER_RTT_printf(0, "move start [%d]: %u %u %d %d %d %u\n", motor, state->min_step_delay, state->step_delay, state->accel_decel_step_count, state->accel_val, state->decel_val, state->decel_start);
 
 		// Set Timer/Counter.
 		tc_write_rc(TC0, motor, 10);
@@ -804,7 +776,7 @@ void prvSmIsrHandler(uint8_t motor)
 		state->rest = 0;
 		if (eep_params.sm[motor].power_save == 1) prvSmEnableFromISR(motor, 0);
 		tc_stop(TC0, motor);
-		SEGGER_RTT_printf(0, "move timer: stop\r\n");
+		SEGGER_RTT_printf(0, "move timer [%d]: stop\r\n", motor);
 		break;
 	case SM_STATE_ACCEL:
 		prvStep(motor, state->dir);

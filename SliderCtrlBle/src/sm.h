@@ -43,7 +43,6 @@ void vSmSetParams(uint16_t accel, uint16_t decel, uint16_t speed_max, uint16_t r
 void vSmGetParams(uint16_t *accel, uint16_t *decel, uint16_t *speed_max, uint16_t *reverse, uint16_t *power_save);
 uint8_t ucSmMove(uint8_t motor, int32_t step);
 uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, uint16_t decel);
-uint8_t ucSmStart(uint8_t motor, uint8_t dir);
 bool bSmMoveContinuous(uint8_t motor, int32_t speed);
 void vSmStop(uint8_t motor);
 void vSmEmergencyStop(uint8_t motor);
