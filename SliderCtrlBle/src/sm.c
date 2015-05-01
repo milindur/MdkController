@@ -42,8 +42,6 @@
 #define SM_PIN_CFG1(motor)     SM_PIN_CFG1_##motor
 #define SM_PIN_CFG2(motor)     SM_PIN_CFG2_##motor
 
-#define SM_PIN_DBG			PIO_PC29_IDX
-
 #define T_PRESCALE  32
 
 #define T_FREQ      (84000000/T_PRESCALE)
@@ -158,9 +156,6 @@ void vSmInit(void)
 	vTraceSetISRProperties(1, "TC0_Handler", 0);
 	vTraceSetISRProperties(2, "TC1_Handler", 0);
 	vTraceSetISRProperties(3, "TC2_Handler", 0);
-	
-	ioport_set_pin_dir(SM_PIN_DBG, IOPORT_DIR_OUTPUT);
-	ioport_set_pin_level(SM_PIN_DBG, false);
 	
 	vSmReload();
 	
@@ -717,9 +712,6 @@ static inline void prvStep(uint8_t motor, uint8_t dir)
 {
 	sm_state_t * state = &_state[motor];
 	
-	//ioport_toggle_pin_level(SM_PIN_DBG);
-	//ioport_set_pin_level(SM_PIN_DBG, false);
-	
 	if (dir == CW)
 	{
 		if (!eep_params.sm[motor].motor_reverse)
@@ -747,18 +739,8 @@ static inline void prvStep(uint8_t motor, uint8_t dir)
 		state->remaining_steps++;
 	}
 
-	//ioport_toggle_pin_level(SM_PIN_DBG);
-
-	//delay_us(1);
 	pio_set_pin_high(state->pin_step);
-	//ioport_set_pin_level(state->pin_step, true);
-	//delay_us(2);
 	pio_set_pin_low(state->pin_step);
-	//ioport_set_pin_level(state->pin_step, false);
-	//delay_us(1);
-	
-	//ioport_toggle_pin_level(SM_PIN_DBG);
-	//ioport_set_pin_level(SM_PIN_DBG, true);
 }
 
 /* Square root routine.

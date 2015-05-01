@@ -56,7 +56,6 @@ static aci_state_t aci_state;
 
 static bool radio_ack_pending  = false;
 static bool timing_change_done = false;
-static traceLabel mot_user_event_channel;
 
 static bool prbBleUpdateSliderControlPointTx(uint8_t * buffer, uint8_t length);
 static bool prbBleProcessSliderControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length);
@@ -69,8 +68,6 @@ static void prvJoystickWatchdogTimerCallback(void *pvParameters);
 
 void vBleInit(void)
 {
-	mot_user_event_channel = xTraceOpenLabel("MotCont");
-	
 	delay_ms(100);
 	
 	if (NULL != services_pipe_type_mapping)
