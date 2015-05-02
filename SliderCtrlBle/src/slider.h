@@ -54,6 +54,7 @@ void vSliderStartExposeNow(void);
 void vSliderStop(void);
 bool bSliderGetCameraTestMode(void);
 uint8_t ucSliderGetState(void);
+bool bSliderGetFinished(void);
 uint32_t ulSliderGetCurrentCycle(void);
 uint32_t ulSliderGetRemainingCycles(void);
 uint32_t ulSliderGetOverallCycles(void);

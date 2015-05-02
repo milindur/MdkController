@@ -24,6 +24,7 @@
 #define sliderCONTROL_TIMER_RATE     (10 / portTICK_RATE_MS)
 
 static uint8_t state = SLIDER_STATE_STOP;
+static bool finished = false;
 static uint8_t test_mode = sliderTEST_NONE;
 static uint32_t current_step;
 static uint32_t current_loop;
@@ -217,6 +218,7 @@ void vSliderStop(void)
         vCamClear();
 		test_mode = sliderTEST_NONE;
 		state = SLIDER_STATE_STOP;
+		finished = true;
 	}
 	taskEXIT_CRITICAL();
 }
@@ -228,6 +230,20 @@ bool bSliderGetCameraTestMode(void)
 	taskENTER_CRITICAL();
 	{
 		v = test_mode == sliderTEST_CAMERA;
+	}
+	taskEXIT_CRITICAL();
+	
+	return v;
+}
+
+bool bSliderGetFinished(void)
+{
+	bool v;
+	
+	taskENTER_CRITICAL();
+	{
+		v = finished;
+		finished = false;
 	}
 	taskEXIT_CRITICAL();
 	
@@ -610,6 +626,7 @@ static void prvSliderControlCallback(void *pvParameters)
 				}
 			}
 			state = SLIDER_STATE_STOP;
+			finished = true;
 			SEGGER_RTT_printf(0, "Slider Control State Change: STOP\n");
 			break;
 	}

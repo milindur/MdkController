@@ -307,11 +307,15 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 		}
 	case 0x7E:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Total Program Run Time\n");
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Program Complete?\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			if (ucSliderGetState() == SLIDER_STATE_STOP)
+			if (bSliderGetFinished())
 			{
 				result[1] = 1;
+			}
+			else
+			{
+				result[1] = 0;
 			}
 			prbBleUpdateSliderControlPointTx(result, 2);
 			return true;
