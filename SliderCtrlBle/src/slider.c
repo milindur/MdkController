@@ -43,9 +43,9 @@ void vSliderInit(void)
 #if !defined(DEBUG)
 	for (uint8_t f = 0; f < SLIDER_MAX_KEY_FRAMES; f++)
 	{
-		for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
+		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 		{
-			eep_params.slider_positions[f].pos[m] = 0;
+			eep_params.slider_positions[f].pos[motor] = 0;
 		}
 	}
 #endif
@@ -212,7 +212,7 @@ void vSliderStop(void)
 		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 		{
 			vSmStop(motor);
-			vSmEnable(motor, 0);
+			if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 0);
 		}
         vCamClear();
 		test_mode = sliderTEST_NONE;
@@ -367,10 +367,10 @@ static void prvSliderControlCallback(void *pvParameters)
 			break;
 		case SLIDER_STATE_WAKE_SM:
 			{
-				for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
-					if (eep_params.sm[m].power_save == 0) vSmEnable(m, 1);
-					if (eep_params.sm[m].power_save == 2) vSmEnable(m, 2);
+					if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
+					if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
 				}
 			}
             state = SLIDER_STATE_GOTO_START;
@@ -378,9 +378,9 @@ static void prvSliderControlCallback(void *pvParameters)
 			break;
 		case SLIDER_STATE_GOTO_START:
 			{
-				for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
-					ucSmMove(m, eep_params.slider_positions[0].pos[m] - lSmGetPosition(m));
+					ucSmMove(motor, eep_params.slider_positions[0].pos[motor] - lSmGetPosition(motor));
 				}
 			}
             state = SLIDER_STATE_WAIT_START;
@@ -505,6 +505,7 @@ static void prvSliderControlCallback(void *pvParameters)
 							}
 						}
 				
+						if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 						if (eep_params.slider_optimize_accel)
 						{
 							// calculate optimal acceleration
@@ -512,8 +513,10 @@ static void prvSliderControlCallback(void *pvParameters)
 				
 							accel = utilsMIN(accel, SM_STEPS_TO_MRAD(eep_params.sm[motor].accel_steps));
 							accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/16));
+							uint16_t max_speed = accel * avail_move_time / 1000;
 								
-							ucSmMoveEx(motor, steps, SM_STEPS_TO_MRAD(eep_params.sm[motor].speed_max_steps), accel, accel);
+							ucSmMoveEx(motor, steps, max_speed, accel, accel);
+							//ucSmMoveEx(motor, steps, SM_STEPS_TO_MRAD(eep_params.sm[motor].speed_max_steps), accel, accel);
 						}
 						else
 						{
@@ -531,10 +534,22 @@ static void prvSliderControlCallback(void *pvParameters)
             }
 			break;
 		case SLIDER_STATE_WAIT_MOVE:
-			if ((ucSmGetState(0) == SM_STATE_STOP) && (ucSmGetState(1) == SM_STATE_STOP) && (ucSmGetState(2) == SM_STATE_STOP))
 			{
+				bool all_stoped = true;
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+				{
+					if (ucSmGetState(motor) != SM_STATE_STOP)
+					{
+						all_stoped = false;
+						continue;
+					}
+					if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 0);
+				}
+				if (all_stoped)
+				{
 					state = SLIDER_STATE_WAIT_INTERVAL;
 					SEGGER_RTT_printf(0, "Slider Control State Change: WAIT_INTERVAL\n");
+				}
 			}
 			break;
 		case SLIDER_STATE_WAIT_INTERVAL:
@@ -555,30 +570,43 @@ static void prvSliderControlCallback(void *pvParameters)
 			break;
 		case SLIDER_STATE_GOTO_END:
 			{
-				for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
-					ucSmMove(m, eep_params.slider_positions[1].pos[m] - lSmGetPosition(m));
+					if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
+					ucSmMove(motor, eep_params.slider_positions[1].pos[motor] - lSmGetPosition(motor));
 				}
 			}
 			state = SLIDER_STATE_WAIT_END;
 			SEGGER_RTT_printf(0, "Slider Control State Change: WAIT_END\n");
 			break;
 		case SLIDER_STATE_WAIT_END:
-			if ((ucSmGetState(0) == SM_STATE_STOP) && (ucSmGetState(1) == SM_STATE_STOP) && (ucSmGetState(2) == SM_STATE_STOP))
 			{
-				state = SLIDER_STATE_SLEEP_SM;
-				SEGGER_RTT_printf(0, "Slider Control State Change: SLEEP_SM\n");
-                step_timer = 0;
-                remaining_step_time = 0;
-				interval_timer = 0;
-				current_loop++;
+				bool all_stoped = true;
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+				{
+					if (ucSmGetState(motor) != SM_STATE_STOP)
+					{
+						all_stoped = false;
+						continue;
+					}
+					if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 0);
+				}
+				if (all_stoped)
+				{
+					state = SLIDER_STATE_SLEEP_SM;
+					SEGGER_RTT_printf(0, "Slider Control State Change: SLEEP_SM\n");
+					step_timer = 0;
+					remaining_step_time = 0;
+					interval_timer = 0;
+					current_loop++;
+				}
 			}
 			break;
 		case SLIDER_STATE_SLEEP_SM:
 			{
-				for (uint8_t m = 0; m < SM_MOTORS_USED; m++)
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
-					vSmEnable(m, 0);
+					if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 0);
 				}
 			}
 			state = SLIDER_STATE_STOP;

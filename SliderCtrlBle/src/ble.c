@@ -339,6 +339,15 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
 		}
+	case 0x03:
+		{
+			uint8_t enable = data[0];
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Motor Enable %d\n", motor, enable);
+			if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, enable);
+		
+			prvBleUpdateSliderControlPointTxOk();
+			return true;
+		}
 	case 0x04:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Stop\n", motor);
@@ -353,16 +362,17 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Set Microstep Value\n", motor);
 			if (microsteps == 16)
 			{
-				vSmSetMicrostepMode(motor, SM_MODE_STEALTH | SM_MODE_INTERPOLATION | SM_MODE_STEPS_16);
+				eep_params.sm[motor].microstep_mode = SM_MODE_STEALTH | SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
 			}
 			else if (microsteps == 8)
 			{
-				vSmSetMicrostepMode(motor, SM_MODE_INTERPOLATION | SM_MODE_STEPS_16);
+				eep_params.sm[motor].microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
 			}
 			else
 			{
-				vSmSetMicrostepMode(motor, SM_MODE_STEPS_16);
+				eep_params.sm[motor].microstep_mode = SM_MODE_STEPS_DEFAULT;
 			}
+			vSmSetMicrostepMode(motor, eep_params.sm[motor].microstep_mode);
 		
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
@@ -372,17 +382,24 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			uint32_t tmp;
 			memcpy(&tmp, data, 4);
 			tmp = __builtin_bswap32(tmp);
-			float speed;
-			memcpy(&speed, &tmp, 4);
+			float fspeed;
+			memcpy(&fspeed, &tmp, 4);
+			int32_t speed = (int32_t) fspeed;
 
-			char buffer[20];
-			sprintf(buffer, "%.3f", speed);
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Move Continuous %s\n", motor, buffer);
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Move Continuous %d\n", motor, speed);
 			
+			joystick_wdg_trigger = 0;
 			if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
 			if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
-			bSmMoveContinuous(motor, (int32_t) (speed * 2.5f));
-		
+			if (speed >= 0)
+			{
+				bSmMoveContinuous(motor, (int32_t) SM_STEPS_TO_MRAD(labs(speed * 3)));
+			}
+			else
+			{
+				bSmMoveContinuous(motor, -1 * (int32_t) SM_STEPS_TO_MRAD(labs(speed * 3)));
+			}
+			
 			prvBleUpdateSliderControlPointTxOk();
 			return true;
 		}
@@ -396,7 +413,7 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 		}
 	case 0x6B:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Get Motor Running, res=%d\n", motor, ucSmGetState(motor));
+			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Get Motor Running\n", motor);
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = ucSmGetState(motor) != SM_STATE_STOP ? 1 : 0;
 			prbBleUpdateSliderControlPointTx(result, 2);
@@ -796,7 +813,6 @@ static void prvJoystickWatchdogTimerCallback(void *pvParameters)
 		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 		{
 			vSmStop(motor);
-			if (eep_params.sm[motor].power_save != 2) vSmEnable(motor, 0);
 		}
 	}
 	

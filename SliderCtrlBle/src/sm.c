@@ -51,6 +51,8 @@
 #define A_SQ        ((int64_t)(ALPHA*2*100000000000))   // ALPHA*2*100000000000
 #define A_x200000   ((int64_t)(ALPHA*2*100000))         // ALPHA*2*100000
 
+#define SM_MIN_STEALTH_STEP_DELAY	(A_T_x1000 / SM_MAX_STEALTH_SPEED_STEPS)
+
 #define CW  1
 #define CCW 0
 
@@ -180,10 +182,10 @@ void vSmSetMicrostepMode(uint8_t motor, uint8_t mode)
 	
 	if (steps == 1)
 	{
-		ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 		ioport_set_pin_level(state->pin_cfg1, false);
-		ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+		ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 		ioport_set_pin_level(state->pin_cfg2, false);
+		ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 		return;
 	}
 	if (steps == 2)
@@ -191,15 +193,15 @@ void vSmSetMicrostepMode(uint8_t motor, uint8_t mode)
 		if (interpolation)
 		{
 			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_INPUT);
-			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg2, false);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 		} 
 		else 
 		{
-			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg1, true);
-			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg2, false);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 		}
 		return;
 	}
@@ -209,23 +211,23 @@ void vSmSetMicrostepMode(uint8_t motor, uint8_t mode)
 		{
 			if (stealth)
 			{
-				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 				ioport_set_pin_level(state->pin_cfg1, true);
+				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_INPUT);
 			}
 			else 
 			{
 				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_INPUT);
-				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 				ioport_set_pin_level(state->pin_cfg2, true);
+				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 			}
 		}
 		else
 		{
-			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg1, false);
-			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg2, true);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 		}
 		return;
 	}
@@ -240,17 +242,17 @@ void vSmSetMicrostepMode(uint8_t motor, uint8_t mode)
 			}
 			else
 			{
-				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 				ioport_set_pin_level(state->pin_cfg1, false);
+				ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 				ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_INPUT);
 			}
 		}
 		else
 		{
-			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg1, true);
-			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
+			ioport_set_pin_dir(state->pin_cfg1, IOPORT_DIR_OUTPUT);
 			ioport_set_pin_level(state->pin_cfg2, true);
+			ioport_set_pin_dir(state->pin_cfg2, IOPORT_DIR_OUTPUT);
 		}
 		return;
 	}
@@ -342,19 +344,40 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	
 	sm_state_t * state = &_state[motor];
 
-	int32_t speed_mrad;
-	if (speed >= 0)
+	if (eep_params.sm[motor].microstep_mode & SM_MODE_STEALTH)
 	{
-		speed_mrad = SM_STEPS_TO_MRAD(speed);
-		if (speed_mrad > state->speed_max_mrad) speed_mrad = state->speed_max_mrad;
+		if (speed > SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS))
+		{
+			speed = SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS);
+		}
+		else if (speed < -1 * SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS))
+		{
+			speed = -1 * SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS);
+		}
 	}
 	else
 	{
-		speed_mrad = -1 * SM_STEPS_TO_MRAD(-1 * speed);
-		if (speed_mrad < -1 * (int32_t) state->speed_max_mrad) speed_mrad = -1 * (int32_t) state->speed_max_mrad;
+		if (speed > SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS))
+		{
+			speed = SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS);
+		}
+		else if (speed < -1 * SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS))
+		{
+			speed = -1 * SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS);
+		}
 	}
-		 
-	SEGGER_RTT_printf(0, "move cont [%d]: %d\n", motor, speed_mrad);
+	
+
+	if (speed >= 0)
+	{
+		if (speed > state->speed_max_mrad) speed = state->speed_max_mrad;
+	}
+	else
+	{
+		if (speed < -1 * (int32_t) state->speed_max_mrad) speed = -1 * (int32_t) state->speed_max_mrad;
+	}
+	
+	SEGGER_RTT_printf(0, "move cont [%d]: %d\n", motor, speed);
 
 	if (sm_state == SM_STATE_STOP)
 	{
@@ -362,7 +385,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 		{
 			state->run_state = SM_STATE_CONT;
 			state->speed_cont_current_mrad = 0;
-			state->speed_cont_target_mrad = speed_mrad;
+			state->speed_cont_target_mrad = speed;
 
 			// calculate first step delay
 			uint64_t step_delay_tmp = (T_FREQ_148 * prulFastSqrt(A_SQ / state->accel_mrad)) / 100;
@@ -381,7 +404,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	}
 	else
 	{
-		state->speed_cont_target_mrad = speed_mrad;
+		state->speed_cont_target_mrad = speed;
 		if (speed == 0)
 		{
 			state->stop_cont = true;
@@ -419,11 +442,6 @@ void prvContinuousControlTask(void *pvParameters)
 			float_t w = state->speed_cont_target_mrad;
 			float_t x = state->speed_cont_current_mrad;
 			
-			/*if (((int32_t) w < 0 && (int32_t) x > 0) || ((int32_t) w > 0 && (int32_t) x < 0))
-			{
-				w = 0;
-			}*/
-			
 			float_t e = w - x;
 			state->cont_esum = state->cont_esum + e;
 			
@@ -438,10 +456,6 @@ void prvContinuousControlTask(void *pvParameters)
 			
 			float_t y = Kp*e + Ki*Ta*state->cont_esum + Kd/Ta*(e - state->cont_ealt);
 			
-			/*current_accel = current_accel + y;
-			if (current_accel > (float_t) state->accel_mrad) current_accel = (float_t) state->accel_mrad;
-			if (current_accel < -1.0f * (float_t) state->accel_mrad) current_accel = -1.0f * (float_t) state->accel_mrad;*/
-			
 			current_accel = y / Ta;
 			
 			if (current_accel > (float_t) state->accel_mrad)
@@ -454,19 +468,27 @@ void prvContinuousControlTask(void *pvParameters)
 			}			
 			
 			taskENTER_CRITICAL();
-			state->speed_cont_current_mrad = state->speed_cont_current_mrad + y;
 
-			/*state->speed_cont_current_mrad = state->speed_cont_current_mrad + current_accel * Ta;*/
-			if (state->speed_cont_current_mrad > state->speed_max_mrad) state->speed_cont_current_mrad = state->speed_max_mrad;
-			if (state->speed_cont_current_mrad < -1.0 * (float_t) state->speed_max_mrad) state->speed_cont_current_mrad = -1.0 * (float_t) state->speed_max_mrad;
+			float new_speed = x + y;
+			if (new_speed > state->speed_max_mrad) new_speed = state->speed_max_mrad;
+			if (new_speed < -1.0 * (float_t) state->speed_max_mrad) new_speed = -1.0 * (float_t) state->speed_max_mrad;
+			state->speed_cont_current_mrad = new_speed;
 			
-			if (fabs(state->speed_cont_current_mrad) > 150.0f)
+			/*if (fabs(new_speed) > 12000.0f && fabs(x) <= 12000.0f)
 			{
-				state->step_delay = A_T_x1000 / labs((int32_t) state->speed_cont_current_mrad);
+				vSmSetMicrostepMode(motor, eep_params.sm[motor].microstep_mode & ~SM_MODE_STEALTH);
+			}
+			else if (fabs(new_speed) < 12000.0f && fabs(x) > 12000.0f)
+			{
+				vSmSetMicrostepMode(motor, eep_params.sm[motor].microstep_mode);
+			}*/
+			
+			if (fabs(new_speed) > 150.0f)
+			{
+				state->step_delay = A_T_x1000 / labs((int32_t) new_speed);
 			}
 			else
 			{
-				//state->speed_cont_current_mrad = 0;
 				state->step_delay = A_T_x1000 / 75;
 				if (fabs(w) <= 1.0f)
 				{
@@ -497,6 +519,21 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 	}
 	
 	sm_state_t * state = &_state[motor];
+
+	if (eep_params.sm[motor].microstep_mode & SM_MODE_STEALTH)
+	{
+		if (speed > SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS))
+		{
+			speed = SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS);
+		}
+	}
+	else
+	{
+		if (speed > SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS))
+		{
+			speed = SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS);
+		}
+	}
 
 	SEGGER_RTT_printf(0, "move [%d]: %d %u %u %u\n", motor, step, speed, accel, decel);
 
@@ -628,6 +665,9 @@ void vSmStop(uint8_t motor)
 		state->accel_decel_step_count = state->decel_val;
 		state->run_state = SM_STATE_DECEL;
 		break;
+	case SM_STATE_CONT:
+		bSmMoveContinuous(motor, 0);
+		break;
 	}
 
 	taskEXIT_CRITICAL();
@@ -636,6 +676,7 @@ void vSmStop(uint8_t motor)
 void vSmEmergencyStop(uint8_t motor)
 {
 	taskENTER_CRITICAL();
+	vSmEnable(motor, 0);
 	_state[motor].run_state = SM_STATE_STOP;
 	taskEXIT_CRITICAL();
 }
@@ -829,7 +870,7 @@ void prvSmIsrHandler(uint8_t motor)
 		// Check if we are at last step
 		if (state->accel_decel_step_count >= 0)
 		{
-			new_step_delay = UINT32_MAX;
+			new_step_delay = INT32_MAX;
 			state->run_state = SM_STATE_STOP;
 		}
 		break;
@@ -846,7 +887,7 @@ void prvSmIsrHandler(uint8_t motor)
 			{
 				if (state->stop_cont)
 				{
-					new_step_delay = UINT32_MAX;
+					new_step_delay = INT32_MAX;
 					state->run_state = SM_STATE_STOP;
 					state->stop_cont = false;
 				}
