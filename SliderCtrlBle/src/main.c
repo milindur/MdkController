@@ -44,10 +44,10 @@ int main(void)
 	prvSetupHardware();
 	
 	vTraceInitTraceData();
-	if (!uiTraceStart())
+	/*if (!uiTraceStart())
 	{
 		SEGGER_RTT_printf(0, "Could not start recorder!\n");
-	}
+	}*/
 	
 	vEepInit();
 	vCamInit();

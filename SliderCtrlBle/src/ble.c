@@ -17,6 +17,7 @@
 #include <aci_setup.h>
 #include "SEGGER_RTT.h"
 #include "services.h"
+#include "version.h"
 #include "eep.h"
 #include "sm.h"
 #include "ble.h"
@@ -24,11 +25,6 @@
 #include "cam.h"
 #include "io.h"
 #include "utils.h"
-
-#define bleDEVICE_NAME_DEFAULT	"MDK Pan/Tilt"
-#define bleFIRMWARE_VERSION		"v0.2.0"
-
-#define MOCO_FIRMWARE_VER	30
 
 #define MOCO_VALUE_BYTE		0
 #define MOCO_VALUE_UINT		1
@@ -250,7 +246,7 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x64:
 		{
 			SEGGER_RTT_printf(0, "Slider Control RX: Get Firmware Version\n");
-			uint32_t tmp = __builtin_bswap32(MOCO_FIRMWARE_VER);
+			uint32_t tmp = __builtin_bswap32(versionFIRMWARE_VERSION);
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateSliderControlPointTx(result, 5);
@@ -626,9 +622,9 @@ void prvAciEventHandlerTask(void *pvParameters)
 								}
 								else
 								{
-									char * name = bleDEVICE_NAME_DEFAULT;
+									char * name = versionDEVICE_NAME_DEFAULT;
 									lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET, (uint8_t *)name, strlen(name));
-									char * version = bleFIRMWARE_VERSION;
+									char * version = versionFIRMWARE_VERSION_STRING;
 									lib_aci_set_local_data(&aci_state, PIPE_DEVICE_INFORMATION_SOFTWARE_REVISION_STRING_SET, (uint8_t *)version, strlen(version));
 									
 									lib_aci_connect(300, 320);

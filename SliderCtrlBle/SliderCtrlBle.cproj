@@ -368,6 +368,16 @@
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
 </ArmGcc>
     </ToolchainSettings>
+    <PostBuildEvent>if exist "$(OutputDirectory)\update" del /f /s /y "$(OutputDirectory)\update\*"
+xcopy /y "$(SolutionDir)\update\*.*" "$(OutputDirectory)\update\"
+xcopy /y "$(SolutionDir)\drivers\*.*" "$(OutputDirectory)\update\drivers\"
+xcopy /y "$(OutputDirectory)\$(OutputFileName).bin" "$(OutputDirectory)\update\"
+cd "$(OutputDirectory)\update"
+del /f mococtrlble.zip
+"$(SolutionDir)\contrib\7z.exe" a -r -tzip mococtrlble.zip *.*
+</PostBuildEvent>
+    <PreBuildEvent>copy "$(MSBuildProjectDirectory)\src\version.c"+nul "$(MSBuildProjectDirectory)\src\version.c" /by
+</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
@@ -560,6 +570,12 @@
     <Folder Include="src\RTT\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\version.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\version.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\ASF\sam\boards\arduino_due_x\arduino_due_x.h">
       <SubType>compile</SubType>
     </None>
@@ -842,7 +858,9 @@
     <None Include="src\ASF\sam\utils\cmsis\sam3x\include\instance\instance_pwm.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\ASF\sam\utils\cmsis\sam3x\include\component\component_uotghs.h" />
+    <Compile Include="src\ASF\sam\utils\cmsis\sam3x\include\component\component_uotghs.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\ASF\sam\utils\cmsis\sam3x\include\instance\instance_chipid.h">
       <SubType>compile</SubType>
     </None>
@@ -903,8 +921,12 @@
     <None Include="src\ASF\sam\utils\cmsis\sam3x\include\pio\pio_sam3x8h.h">
       <SubType>compile</SubType>
     </None>
-    <Compile Include="src\ASF\sam\utils\cmsis\sam3x\include\instance\instance_chipid.h" />
-    <Compile Include="src\ASF\sam\utils\cmsis\sam3x\include\instance\instance_rstc.h" />
+    <Compile Include="src\ASF\sam\utils\cmsis\sam3x\include\instance\instance_chipid.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ASF\sam\utils\cmsis\sam3x\include\instance\instance_rstc.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\ASF\sam\utils\cmsis\sam3x\source\templates\exceptions.c">
       <SubType>compile</SubType>
     </Compile>
