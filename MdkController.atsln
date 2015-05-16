@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Atmel Studio Solution File, Format Version 11.00
-Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "SliderCtrlBle", "SliderCtrlBle\SliderCtrlBle.cproj", "{11068D59-8458-4610-A1AC-1BE34F29BB89}"
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "MdkController", "MdkController\MdkController.cproj", "{11068D59-8458-4610-A1AC-1BE34F29BB89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -12,9 +12,9 @@
     <OutputFileName>$(MSBuildProjectName)</OutputFileName>
     <OutputFileExtension>.elf</OutputFileExtension>
     <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
-    <AssemblyName>SliderCtrlBle</AssemblyName>
-    <Name>SliderCtrlBle</Name>
-    <RootNamespace>SliderCtrlBle</RootNamespace>
+    <AssemblyName>MdkController</AssemblyName>
+    <Name>MdkController</Name>
+    <RootNamespace>MdkController</RootNamespace>
     <ToolchainFlavour>Native</ToolchainFlavour>
     <KeepTimersRunning>true</KeepTimersRunning>
     <OverrideVtor>false</OverrideVtor>
@@ -238,7 +238,7 @@
           </JtagDaisyChainDevices>
         </InterfaceProperties>
         <InterfaceName>JTAG</InterfaceName>
-        <JlinkConfigFile>D:\Dev\atmel_studio\SliderCtrlBle\SliderCtrlBle\jlink.config</JlinkConfigFile>
+        <JlinkConfigFile>D:\Dev\atmel_studio\MdkController\MdkController\jlink.config</JlinkConfigFile>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.samice</ToolType>
       <ToolNumber>269303860</ToolNumber>
@@ -373,8 +373,8 @@ xcopy /y "$(SolutionDir)\update\*.*" "$(OutputDirectory)\update\"
 xcopy /y "$(SolutionDir)\drivers\*.*" "$(OutputDirectory)\update\drivers\"
 xcopy /y "$(OutputDirectory)\$(OutputFileName).bin" "$(OutputDirectory)\update\"
 cd "$(OutputDirectory)\update"
-del /f mococtrlble.zip
-"$(SolutionDir)\contrib\7z.exe" a -r -tzip mococtrlble.zip *.*
+del /f mdkcontroller.zip
+"$(SolutionDir)\contrib\7z.exe" a -r -tzip mdkcontroller.zip *.*
 </PostBuildEvent>
     <PreBuildEvent>copy "$(MSBuildProjectDirectory)\src\version.c"+nul "$(MSBuildProjectDirectory)\src\version.c" /by
 </PreBuildEvent>
