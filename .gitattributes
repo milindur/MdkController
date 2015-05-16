@@ -1,0 +1,38 @@
+* text eol=crlf
+
+*.md  		text eol=crlf
+*.cs    	text eol=crlf diff=csharp
+*.c     	text eol=crlf
+*.h     	text eol=crlf
+*.s     	text eol=crlf
+*.ld    	text eol=crlf
+*.xaml  	text eol=crlf
+*.xml  		text eol=crlf
+*.config	text eol=crlf
+
+*.sln       text eol=crlf merge=binary
+*.atsln     text eol=crlf merge=binary
+*.cproj     text eol=crlf merge=binary
+*.csproj    text eol=crlf merge=binary
+*.vbproj    text eol=crlf merge=binary
+*.vcxproj   text eol=crlf merge=binary
+*.vcproj    text eol=crlf merge=binary
+*.dbproj    text eol=crlf merge=binary
+*.fsproj    text eol=crlf merge=binary
+*.lsproj    text eol=crlf merge=binary
+*.wixproj   text eol=crlf merge=binary
+*.modelproj text eol=crlf merge=binary
+*.sqlproj   text eol=crlf merge=binary
+*.wwaproj   text eol=crlf merge=binary
+
+*.dll	binary
+*.lib	binary
+*.a		binary
+*.exe	binary
+*.cat	binary
+*.sys	binary
+*.jpg   binary
+*.png   binary
+*.gif   binary
+*.pdf   binary
+
