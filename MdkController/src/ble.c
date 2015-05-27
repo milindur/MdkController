@@ -281,7 +281,7 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 		}
 	case 0x7A:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Joystick Watchdog Mode Status\n");
+			SEGGER_RTT_printf(0, "Slider Control RX: Get Joystick Watchdog Mode Status\n");
 			joystick_wdg_trigger = 0;
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = joystick_wdg_enabled;
@@ -388,16 +388,18 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 
 			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Move Continuous %d\n", motor, speed);
 			
+			int32_t max_speed = lSmGetMaxSpeed(motor);
+			
 			joystick_wdg_trigger = 0;
 			if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
 			if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
 			if (speed >= 0)
 			{
-				bSmMoveContinuous(motor, (int32_t) SM_STEPS_TO_MRAD(labs(speed * 3)));
+				bSmMoveContinuous(motor, (int32_t) SM_STEPS_TO_MRAD(labs(speed)) * max_speed / (int32_t) SM_STEPS_TO_MRAD(5000));
 			}
 			else
 			{
-				bSmMoveContinuous(motor, -1 * (int32_t) SM_STEPS_TO_MRAD(labs(speed * 3)));
+				bSmMoveContinuous(motor, -1 * (int32_t) SM_STEPS_TO_MRAD(labs(speed)) * max_speed / (int32_t) SM_STEPS_TO_MRAD(5000));
 			}
 			
 			prvBleUpdateSliderControlPointTxOk();

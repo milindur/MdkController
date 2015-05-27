@@ -18,7 +18,7 @@ const eep_params_t eep_params_def = {
 		.microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEALTH | SM_MODE_STEPS_DEFAULT,
 		.accel_steps = 10*SM_SPR,
 		.decel_steps = 10*SM_SPR,
-		.speed_max_steps = 8*SM_SPR,
+		.speed_max_steps = 6*SM_SPR,
 		.motor_reverse = 0,
 		.power_save = 2
 	},

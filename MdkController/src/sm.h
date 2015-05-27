@@ -24,7 +24,7 @@
 #define SM_MRAD_TO_STEPS(p) ((uint32_t)(p)*SM_SPR/(2*M_PI*1000))
 
 #define SM_MAX_ACCEL_STEPS			(10*SM_SPR)
-#define SM_MAX_SPEED_STEPS			(8*SM_SPR)
+#define SM_MAX_SPEED_STEPS			(6*SM_SPR)
 #define SM_MAX_STEALTH_SPEED_STEPS	(4*SM_SPR)
 
 #define SM_MOTORS_USED    3
@@ -44,6 +44,7 @@ void vSmReload(void);
 void vSmEnable(uint8_t motor, uint8_t enable);
 void vSmSetParams(uint16_t accel, uint16_t decel, uint16_t speed_max, uint16_t reverse, uint16_t power_save);
 void vSmGetParams(uint16_t *accel, uint16_t *decel, uint16_t *speed_max, uint16_t *reverse, uint16_t *power_save);
+int32_t lSmGetMaxSpeed(uint8_t motor);
 uint8_t ucSmMove(uint8_t motor, int32_t step);
 uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, uint16_t decel);
 bool bSmMoveContinuous(uint8_t motor, int32_t speed);

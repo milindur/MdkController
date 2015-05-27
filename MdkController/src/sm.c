@@ -331,6 +331,23 @@ void vSmGetParams(uint16_t *accel, uint16_t *decel, uint16_t *speed_max,
 	*power_save = eep_params.sm[0].power_save;
 }
 
+int32_t lSmGetMaxSpeed(uint8_t motor)
+{
+	sm_state_t * state = &_state[motor];
+	
+	int32_t absolute_max_mrad;
+	if (eep_params.sm[motor].microstep_mode & SM_MODE_STEALTH)
+	{
+		absolute_max_mrad = SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS);
+	}
+	else
+	{
+		absolute_max_mrad = SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS);
+	}
+	
+	return utilsMIN(state->speed_max_mrad, absolute_max_mrad);
+}
+
 bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 {
 	taskENTER_CRITICAL();
@@ -344,39 +361,10 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	
 	sm_state_t * state = &_state[motor];
 
-	if (eep_params.sm[motor].microstep_mode & SM_MODE_STEALTH)
-	{
-		if (speed > SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS))
-		{
-			speed = SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS);
-		}
-		else if (speed < -1 * SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS))
-		{
-			speed = -1 * SM_STEPS_TO_MRAD(SM_MAX_STEALTH_SPEED_STEPS);
-		}
-	}
-	else
-	{
-		if (speed > SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS))
-		{
-			speed = SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS);
-		}
-		else if (speed < -1 * SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS))
-		{
-			speed = -1 * SM_STEPS_TO_MRAD(SM_MAX_SPEED_STEPS);
-		}
-	}
-	
+	int32_t max_speed = lSmGetMaxSpeed(motor);
+	if (speed > max_speed) speed = max_speed;
+	if (speed < -1 * max_speed) speed = -1 * max_speed;
 
-	if (speed >= 0)
-	{
-		if (speed > state->speed_max_mrad) speed = state->speed_max_mrad;
-	}
-	else
-	{
-		if (speed < -1 * (int32_t) state->speed_max_mrad) speed = -1 * (int32_t) state->speed_max_mrad;
-	}
-	
 	SEGGER_RTT_printf(0, "move cont [%d]: %d\n", motor, speed);
 
 	if (sm_state == SM_STATE_STOP)
