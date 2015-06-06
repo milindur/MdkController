@@ -642,6 +642,8 @@ void prvAciEventHandlerTask(void *pvParameters)
 								}
 								else
 								{
+									vTaskDelay(50 / portTICK_RATE_MS);
+									
 									char * name = versionDEVICE_NAME_DEFAULT;
 									lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET, (uint8_t *)name, strlen(name));
 									char * version = versionFIRMWARE_VERSION_STRING;
@@ -649,8 +651,6 @@ void prvAciEventHandlerTask(void *pvParameters)
 									
 									lib_aci_connect(300, 320);
 									SEGGER_RTT_printf(0, "Advertising started\n");
-									
-									
 								}
 								break;
 								
@@ -792,6 +792,8 @@ void prvAciEventHandlerTask(void *pvParameters)
 						SEGGER_RTT_printf(0, (const char *)&aci_evt->params.hw_error.file_name[counter]);
 					}
 					SEGGER_RTT_printf(0, "\n");
+					
+					vTaskDelay(50 / portTICK_RATE_MS);
 					
 					lib_aci_connect(300, 320);
 					SEGGER_RTT_printf(0, "Advertising started\n");
