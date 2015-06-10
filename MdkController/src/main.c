@@ -19,7 +19,7 @@
 #include "cam.h"
 #include "sm.h"
 #include "ble.h"
-#include "slider.h"
+#include "mode_sms.h"
 
 #define mainCHECK_TIMER_RATE                    (500 / portTICK_RATE_MS)
 
@@ -54,7 +54,7 @@ int main(void)
 	vIoInit();
 	vSmInit();
 	vBleInit();
-	vSliderInit();
+	vModeSmsInit();
 	
 	xTimerHandle xCheckTimer = xTimerCreate(
 		(const char * const) "ChkTmr",

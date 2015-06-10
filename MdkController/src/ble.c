@@ -21,7 +21,7 @@
 #include "eep.h"
 #include "sm.h"
 #include "ble.h"
-#include "slider.h"
+#include "mode_sms.h"
 #include "cam.h"
 #include "io.h"
 #include "utils.h"
@@ -53,12 +53,12 @@ static aci_state_t aci_state;
 static bool radio_ack_pending  = false;
 static bool timing_change_done = false;
 
-static bool prbBleUpdateSliderControlPointTx(uint8_t * buffer, uint8_t length);
-static bool prbBleProcessSliderControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length);
-static void prvBleUpdateSliderControlPointTxOk(void);
+static bool prbBleUpdateModeSmsControlPointTx(uint8_t * buffer, uint8_t length);
+static bool prbBleProcessModeSmsControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length);
+static bool prbBleProcessModeSmsControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length);
+static bool prbBleProcessModeSmsControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length);
+static bool prbBleProcessModeSmsControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length);
+static void prvBleUpdateModeSmsControlPointTxOk(void);
 static void prvAciEventHandlerTask(void *pvParameters);
 static void prvJoystickWatchdogTimerCallback(void *pvParameters);
 
@@ -103,7 +103,7 @@ void vBleInit(void)
 	xTimerStart(xJoystickWatchdogTimer, 0);	
 }
 
-bool prbBleUpdateSliderControlPointTx(uint8_t * data, uint8_t length)
+bool prbBleUpdateModeSmsControlPointTx(uint8_t * data, uint8_t length)
 {
 	uint8_t result[] = { 0, 0, 0, 0, 0, 0xff, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	
@@ -127,53 +127,53 @@ bool prbBleUpdateSliderControlPointTx(uint8_t * data, uint8_t length)
 	return false;
 }
 
-static void prvBleUpdateSliderControlPointTxOk(void)
+static void prvBleUpdateModeSmsControlPointTxOk(void)
 {
-	prbBleUpdateSliderControlPointTx(NULL, 0);
+	prbBleUpdateModeSmsControlPointTx(NULL, 0);
 }
 
-bool prbBleProcessSliderControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length)
+bool prbBleProcessModeSmsControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length)
 {
-	SEGGER_RTT_printf(0, "Slider Control RX: Adr %02x Cmd %02x\n", subadr, cmd);
+	SEGGER_RTT_printf(0, "ModeSms Control RX: Adr %02x Cmd %02x\n", subadr, cmd);
 		
 	switch (subadr)
 	{
 	case 0x00:
-		return prbBleProcessSliderControlPointRxMain(cmd, data, data_length);
+		return prbBleProcessModeSmsControlPointRxMain(cmd, data, data_length);
 	case 0x01:
 	case 0x02:
 	case 0x03:
-		return prbBleProcessSliderControlPointRxMotor(subadr - 1, cmd, data, data_length);
+		return prbBleProcessModeSmsControlPointRxMotor(subadr - 1, cmd, data, data_length);
 	case 0x04:
-		return prbBleProcessSliderControlPointRxCamera(cmd, data, data_length);
+		return prbBleProcessModeSmsControlPointRxCamera(cmd, data, data_length);
 	}		
 	
 	return false;
 }
 
-bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length)
+bool prbBleProcessModeSmsControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length)
 {
 	switch (cmd)
 	{
 	case 0x02:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Start Program\n");
-			vSliderStart();
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Start Program\n");
+			vModeSmsStart();
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x04:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Stop Program\n");
-			vSliderStop();
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Stop Program\n");
+			vModeSmsStop();
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x0A:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Move Home\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Move Home\n");
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
 				if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
@@ -181,135 +181,135 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 				ucSmMove(motor, -lSmGetPosition(motor));
 			}
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x0E:
 		{
 			uint8_t enable = data[0];
-			SEGGER_RTT_printf(0, "Slider Control RX: Set Joystick Watchdog %d\n", enable);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Set Joystick Watchdog %d\n", enable);
 			joystick_wdg_enabled = enable;
 			joystick_wdg_trigger = 0;
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x19:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Move Start Point\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Move Start Point\n");
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
 				if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
 				if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
-				int32_t steps = eep_params.slider_positions[0].pos[motor] - lSmGetPosition(motor);
+				int32_t steps = eep_params.mode_sms_positions[0].pos[motor] - lSmGetPosition(motor);
 				ucSmMove(motor, steps);
 			}
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x1A:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Set Program Start Point\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Set Program Start Point\n");
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
-				eep_params.slider_positions[0].pos[motor] = lSmGetPosition(motor);
-				SEGGER_RTT_printf(0, "Slider Control RX: Set Program Start Point %d: %d\n", motor, lSmGetPosition(motor));
+				eep_params.mode_sms_positions[0].pos[motor] = lSmGetPosition(motor);
+				SEGGER_RTT_printf(0, "ModeSms Control RX: Set Program Start Point %d: %d\n", motor, lSmGetPosition(motor));
 			}
 			
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x1B:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Set Program End Point\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Set Program End Point\n");
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
-				eep_params.slider_positions[1].pos[motor] = lSmGetPosition(motor);
-				SEGGER_RTT_printf(0, "Slider Control RX: Set Program End Point %d: %d\n", motor, lSmGetPosition(motor));
+				eep_params.mode_sms_positions[1].pos[motor] = lSmGetPosition(motor);
+				SEGGER_RTT_printf(0, "ModeSms Control RX: Set Program End Point %d: %d\n", motor, lSmGetPosition(motor));
 			}
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x1D:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Swap Program Start/End Points\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Swap Program Start/End Points\n");
 			
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
-				vUtilsSwap(&eep_params.slider_positions[0].pos[motor], &eep_params.slider_positions[1].pos[motor]);
+				vUtilsSwap(&eep_params.mode_sms_positions[0].pos[motor], &eep_params.mode_sms_positions[1].pos[motor]);
 			}
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x64:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Firmware Version\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Firmware Version\n");
 			uint32_t tmp = __builtin_bswap32(versionFIRMWARE_VERSION);
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
-			prbBleUpdateSliderControlPointTx(result, 5);
+			prbBleUpdateModeSmsControlPointTx(result, 5);
 			return true;
 		}
 	case 0x65:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Run Status\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Run Status\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			if (ucSliderGetState() != SLIDER_STATE_STOP)
+			if (ucModeSmsGetState() != MODE_SMS_STATE_STOP)
 			{
 				result[1] = 2;
 			}
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x66:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Run Time\n");
-			uint32_t tmp = __builtin_bswap32(ulSliderGetCurrentTime());
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Run Time\n");
+			uint32_t tmp = __builtin_bswap32(ulModeSmsGetCurrentTime());
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
-			prbBleUpdateSliderControlPointTx(result, 5);
+			prbBleUpdateModeSmsControlPointTx(result, 5);
 			return true;
 		}
 	case 0x76:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get SMS / Continuous Program Mode\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get SMS / Continuous Program Mode\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x7A:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Joystick Watchdog Mode Status\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Joystick Watchdog Mode Status\n");
 			joystick_wdg_trigger = 0;
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = joystick_wdg_enabled;
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x7B:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Program %% Complete\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Program %% Complete\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			result[1] = ucSliderGetProgress();
-			prbBleUpdateSliderControlPointTx(result, 2);
+			result[1] = ucModeSmsGetProgress();
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x7D:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Total Program Run Time\n");
-			uint32_t tmp = __builtin_bswap32(ulSliderGetOverallTime());
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Total Program Run Time\n");
+			uint32_t tmp = __builtin_bswap32(ulModeSmsGetOverallTime());
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
-			prbBleUpdateSliderControlPointTx(result, 5);
+			prbBleUpdateModeSmsControlPointTx(result, 5);
 			return true;
 		}
 	case 0x7E:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Program Complete?\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Program Complete?\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			if (bSliderGetFinished())
+			if (bModeSmsGetFinished())
 			{
 				result[1] = 1;
 			}
@@ -317,49 +317,49 @@ bool prbBleProcessSliderControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t 
 			{
 				result[1] = 0;
 			}
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	}
 
-	prvBleUpdateSliderControlPointTxOk();
+	prvBleUpdateModeSmsControlPointTxOk();
 	return false;
 }
 
-bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length)
+bool prbBleProcessModeSmsControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length)
 {
 	switch (cmd)
 	{
 	case 0x02:
 		{
 			uint8_t power_save = data[0];
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Motor Sleep %d\n", motor, power_save);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Motor Sleep %d\n", motor, power_save);
 			eep_params.sm[motor].power_save = power_save == 1 ? 1 : 2;
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x03:
 		{
 			uint8_t enable = data[0];
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Motor Enable %d\n", motor, enable);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Motor Enable %d\n", motor, enable);
 			if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, enable);
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x04:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Stop\n", motor);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Stop\n", motor);
 			vSmStop(motor);
 			
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x06:
 		{
 			uint8_t microsteps = data[0];
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Set Microstep Value\n", motor);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Set Microstep Value\n", motor);
 			if (microsteps == 4)
 			{
 				eep_params.sm[motor].microstep_mode = SM_MODE_STEALTH | SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
@@ -374,7 +374,7 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			}
 			vSmSetMicrostepMode(motor, eep_params.sm[motor].microstep_mode);
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x0D:
@@ -386,7 +386,7 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			memcpy(&fspeed, &tmp, 4);
 			int32_t speed = (int32_t) fspeed;
 
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Move Continuous %d\n", motor, speed);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Move Continuous %d\n", motor, speed);
 			
 			int32_t max_speed = lSmGetMaxSpeed(motor);
 			
@@ -402,12 +402,12 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 				bSmMoveContinuous(motor, -1 * (int32_t) SM_STEPS_TO_MRAD(labs(speed)) * max_speed / (int32_t) SM_STEPS_TO_MRAD(5000));
 			}
 			
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x66:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Microstep Value\n", motor);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Microstep Value\n", motor);
 			uint8_t stealth = eep_params.sm[motor].microstep_mode & SM_MODE_STEALTH;
 			uint8_t interpolation = eep_params.sm[motor].microstep_mode & SM_MODE_INTERPOLATION;
 			
@@ -424,183 +424,183 @@ bool prbBleProcessSliderControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t 
 			{
 				result[1] = 16;
 			}
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x6B:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Get Motor Running\n", motor);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Get Motor Running\n", motor);
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = ucSmGetState(motor) != SM_STATE_STOP ? 1 : 0;
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x75:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: [MOTOR%d] Check Motor Sleep State\n", motor);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: [MOTOR%d] Check Motor Sleep State\n", motor);
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = eep_params.sm[motor].power_save == 1 ? 1 : 0;
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	}
 
-	prvBleUpdateSliderControlPointTxOk();
+	prvBleUpdateModeSmsControlPointTxOk();
 	return false;
 }
 
-bool prbBleProcessSliderControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length)
+bool prbBleProcessModeSmsControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length)
 {
 	switch (cmd)
 	{
 	case 0x03:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Expose Now\n");
-			vSliderStartExposeNow();
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Expose Now\n");
+			vModeSmsStartExposeNow();
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x04:
 		{
 			uint32_t trigger_time = __builtin_bswap32(*(uint32_t *)data);
-			SEGGER_RTT_printf(0, "Slider Control RX: Trigger Time %d\n", trigger_time);
-			eep_params.slider_exposure_time = trigger_time;
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Trigger Time %d\n", trigger_time);
+			eep_params.mode_sms_exposure_time = trigger_time;
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x05:
 		{
 			uint16_t focus_time = __builtin_bswap16(*(uint16_t *)data);
-			SEGGER_RTT_printf(0, "Slider Control RX: Focus Time %d\n", focus_time);
-			eep_params.slider_focus_time = focus_time;
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Focus Time %d\n", focus_time);
+			eep_params.mode_sms_focus_time = focus_time;
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x06:
 		{
 			uint16_t count = __builtin_bswap16(*(uint16_t *)data);
-			SEGGER_RTT_printf(0, "Slider Control RX: Max Shots %d\n", count);
-			eep_params.slider_count = count;
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Max Shots %d\n", count);
+			eep_params.mode_sms_count = count;
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x07:
 		{
 			uint16_t exposure_delay_time = __builtin_bswap16(*(uint16_t *)data);
-			SEGGER_RTT_printf(0, "Slider Control RX: Exposure Delay %d\n", exposure_delay_time);
-			eep_params.slider_post_time = exposure_delay_time;
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Exposure Delay %d\n", exposure_delay_time);
+			eep_params.mode_sms_post_time = exposure_delay_time;
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x0A:
 		{
 			uint32_t interval = __builtin_bswap32(*(uint32_t *)data);
-			SEGGER_RTT_printf(0, "Slider Control RX: Interval %d\n", interval);
-			eep_params.slider_interval = interval;
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Interval %d\n", interval);
+			eep_params.mode_sms_interval = interval;
 						
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x0B:
 		{
 			uint8_t enable = data[0];
-			SEGGER_RTT_printf(0, "Slider Control RX: Camera Test Mode\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Camera Test Mode\n");
 			if (enable)
 			{
-				vSliderStartCameraTest();
+				vModeSmsStartCameraTest();
 			}
 			else
 			{
-				vSliderStop();				
+				vModeSmsStop();				
 			}
 		
-			prvBleUpdateSliderControlPointTxOk();
+			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}
 	case 0x64:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Camera Enable\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Camera Enable\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 1 };
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x65:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Exposing now?\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Exposing now?\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			prbBleUpdateSliderControlPointTx(result, 2);
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	case 0x66:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Trigger Time\n");
-			uint32_t tmp = __builtin_bswap32(eep_params.slider_exposure_time);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Trigger Time\n");
+			uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_exposure_time);
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
-			prbBleUpdateSliderControlPointTx(result, 5);
+			prbBleUpdateModeSmsControlPointTx(result, 5);
 			return true;
 		}
 	case 0x67:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Focus Time\n");
-			uint16_t tmp = __builtin_bswap16(eep_params.slider_exposure_time);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Focus Time\n");
+			uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_exposure_time);
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
-			prbBleUpdateSliderControlPointTx(result, 3);
+			prbBleUpdateModeSmsControlPointTx(result, 3);
 			return true;
 		}
 	case 0x68:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Max Shots\n");
-			uint32_t tmp = __builtin_bswap32(eep_params.slider_count);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Max Shots\n");
+			uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_count);
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
-			prbBleUpdateSliderControlPointTx(result, 5);
+			prbBleUpdateModeSmsControlPointTx(result, 5);
 			return true;
 		}
 	case 0x69:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Exposure Delay\n");
-			uint16_t tmp = __builtin_bswap16(eep_params.slider_post_time);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Exposure Delay\n");
+			uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_post_time);
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
-			prbBleUpdateSliderControlPointTx(result, 3);
+			prbBleUpdateModeSmsControlPointTx(result, 3);
 			return true;
 		}
 	case 0x6C:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Interval\n");
-			uint32_t tmp = __builtin_bswap32(eep_params.slider_interval);
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Interval\n");
+			uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_interval);
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
-			prbBleUpdateSliderControlPointTx(result, 5);
+			prbBleUpdateModeSmsControlPointTx(result, 5);
 			return true;
 		}
 	case 0x6D:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Current Shots\n");
-			uint16_t tmp = __builtin_bswap16((uint16_t)ulSliderGetCurrentCycle());
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Current Shots\n");
+			uint16_t tmp = __builtin_bswap16((uint16_t)ulModeSmsGetCurrentCycle());
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
-			prbBleUpdateSliderControlPointTx(result, 3);
+			prbBleUpdateModeSmsControlPointTx(result, 3);
 			return true;
 		}
 	case 0x6E:
 		{
-			SEGGER_RTT_printf(0, "Slider Control RX: Get Camera Test Mode\n");
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Get Camera Test Mode\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			result[1] = ucSliderGetState() != SLIDER_STATE_STOP && bSliderGetCameraTestMode() ? 1 : 0;
-			prbBleUpdateSliderControlPointTx(result, 2);
+			result[1] = ucModeSmsGetState() != MODE_SMS_STATE_STOP && bModeSmsGetCameraTestMode() ? 1 : 0;
+			prbBleUpdateModeSmsControlPointTx(result, 2);
 			return true;
 		}
 	}
 	
-	prvBleUpdateSliderControlPointTxOk();
+	prvBleUpdateModeSmsControlPointTxOk();
 	return false;
 }
 
@@ -779,7 +779,7 @@ void prvAciEventHandlerTask(void *pvParameters)
 							
 							if (*header1 == 0 && *header2 == 0xff00 && adr == 3)
 							{
-								prbBleProcessSliderControlPointRx(subadr, cmd, data, len);
+								prbBleProcessModeSmsControlPointRx(subadr, cmd, data, len);
 							}
 						}
 					}

@@ -1236,10 +1236,10 @@ del /f mdkcontroller.zip
     <Compile Include="src\services.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\slider.c">
+    <Compile Include="src\mode_sms.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\slider.h">
+    <Compile Include="src\mode_sms.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\sm.c">

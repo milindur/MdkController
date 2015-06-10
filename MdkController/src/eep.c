@@ -38,22 +38,22 @@ const eep_params_t eep_params_def = {
 		.motor_reverse = 0,
 		.power_save = 2
 	},
-	.slider_pre_time = 0,
-	.slider_focus_time = 100,
-	.slider_exposure_time = 100,
-	.slider_post_time = 100,
-	.slider_optimize_accel = 1,
-	.slider_interval = 8000,
-	.slider_count = 100,
-	.slider_ramp_count = 0,
-	.slider_stall_count = 0,
-	.slider_positions[0] = {
+	.mode_sms_pre_time = 0,
+	.mode_sms_focus_time = 100,
+	.mode_sms_exposure_time = 100,
+	.mode_sms_post_time = 100,
+	.mode_sms_optimize_accel = 1,
+	.mode_sms_interval = 8000,
+	.mode_sms_count = 100,
+	.mode_sms_ramp_count = 0,
+	.mode_sms_stall_count = 0,
+	.mode_sms_positions[0] = {
 		.pos = { 0, 0, 0 }	
 	},
-	.slider_positions[1] = {
+	.mode_sms_positions[1] = {
 		.pos = { 0, 0, 0 }
 	},
-	.slider_positions[2] = {
+	.mode_sms_positions[2] = {
 		.pos = { 0, 0, 0 }
 	}
 };

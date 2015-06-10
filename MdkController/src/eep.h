@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "sm.h"
-#include "slider.h"
+#include "mode_sms.h"
 
 typedef struct {
 	uint8_t microstep_mode;
@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct {
 	int32_t pos[SM_MOTORS_USED];
-} eep_slider_position_params_t;
+} eep_mode_sms_position_params_t;
 
 typedef struct {
 	uint16_t version;
@@ -26,19 +26,19 @@ typedef struct {
 
 	eep_sm_params_t sm[SM_MOTORS_USED];
 	
-	uint32_t slider_pre_time;
-	uint32_t slider_focus_time;
-	uint32_t slider_exposure_time;
-	uint32_t slider_post_time;
+	uint32_t mode_sms_pre_time;
+	uint32_t mode_sms_focus_time;
+	uint32_t mode_sms_exposure_time;
+	uint32_t mode_sms_post_time;
 	
-	uint8_t slider_optimize_accel;
+	uint8_t mode_sms_optimize_accel;
     
-	uint32_t slider_interval;
-    uint32_t slider_count;
-    uint16_t slider_ramp_count;
-    uint16_t slider_stall_count;
+	uint32_t mode_sms_interval;
+    uint32_t mode_sms_count;
+    uint16_t mode_sms_ramp_count;
+    uint16_t mode_sms_stall_count;
 	
-	eep_slider_position_params_t slider_positions[SLIDER_MAX_KEY_FRAMES];
+	eep_mode_sms_position_params_t mode_sms_positions[MODE_SMS_MAX_KEY_FRAMES];
 } eep_params_t;
 
 extern eep_params_t eep_params;
