@@ -158,8 +158,23 @@ bool prbBleProcessModeSmsControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t
 	case 0x02:
 		{
 			SEGGER_RTT_printf(0, "ModeSms Control RX: Start Program\n");
-			vModeSmsStart();
+			if (bModeSmsGetPaused())
+			{
+				vModeSmsResume();
+			}
+			else
+			{
+				vModeSmsStart();
+			}
 						
+			prvBleUpdateModeSmsControlPointTxOk();
+			return true;
+		}
+	case 0x03:
+		{
+			SEGGER_RTT_printf(0, "ModeSms Control RX: Pause Program\n");
+			vModeSmsPause();
+		
 			prvBleUpdateModeSmsControlPointTxOk();
 			return true;
 		}

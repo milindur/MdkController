@@ -36,6 +36,7 @@ static uint32_t remaining_step_time;
 static uint32_t remaining_time;
 static uint32_t overall_time;
 static uint32_t elapsed_time;
+static xTimerHandle xModeSmsControlTimer;
 
 static void prvModeSmsControlCallback(void *pvParameters);
 
@@ -51,14 +52,13 @@ void vModeSmsInit(void)
 	}
 #endif
 
-	xTimerHandle xModeSmsControlTimer = xTimerCreate(
+	xModeSmsControlTimer = xTimerCreate(
 		(const char * const) "ModeSmsCtrlTmr",
 		mode_smsCONTROL_TIMER_RATE,
 		pdTRUE,
 		NULL,
 		prvModeSmsControlCallback);
 	configASSERT(xModeSmsControlTimer);
-	xTimerStart(xModeSmsControlTimer, 0);
 }
 
 void vModeSmsSetParams(mode_sms_setup_t *params)
@@ -123,6 +123,22 @@ uint32_t ulModeSmsGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uin
     return pre_time + focus_time + exposure_time + post_time + 500;
 }
 
+void vModeSmsPause(void)
+{
+	if (state == MODE_SMS_STATE_STOP) return;
+	if (bModeSmsGetPaused()) return;
+	
+	xTimerStop(xModeSmsControlTimer, 0);
+}
+
+void vModeSmsResume(void)
+{
+	if (state == MODE_SMS_STATE_STOP) return;
+	if (!bModeSmsGetPaused()) return;
+	
+	xTimerStart(xModeSmsControlTimer, 0);
+}
+
 void vModeSmsStartExposeNow(void)
 {
 	if (state != MODE_SMS_STATE_STOP) return;
@@ -137,6 +153,7 @@ void vModeSmsStartExposeNow(void)
 		interval_timer = 0;
 		
 		state = MODE_SMS_STATE_WAIT_PRE_TIME;
+		xTimerStart(xModeSmsControlTimer, 0);
 	}
 	taskEXIT_CRITICAL();
 }
@@ -155,6 +172,7 @@ void vModeSmsStartCameraTest(void)
 		interval_timer = 0;
 		
 		state = MODE_SMS_STATE_WAIT_PRE_TIME;
+		xTimerStart(xModeSmsControlTimer, 0);
 	}
 	taskEXIT_CRITICAL();
 }
@@ -202,6 +220,7 @@ void vModeSmsStart(void)
 		overall_time = eep_params.mode_sms_count * eep_params.mode_sms_interval;
 
 		state = MODE_SMS_STATE_WAKE_SM;
+		xTimerStart(xModeSmsControlTimer, 0);
 	}
 	taskEXIT_CRITICAL();
 }
@@ -210,6 +229,8 @@ void vModeSmsStop(void)
 {
     taskENTER_CRITICAL();
     {
+		xTimerStop(xModeSmsControlTimer, 0);
+		
 		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 		{
 			vSmStop(motor);
@@ -248,6 +269,13 @@ bool bModeSmsGetFinished(void)
 	taskEXIT_CRITICAL();
 	
 	return v;
+}
+
+bool bModeSmsGetPaused(void)
+{
+	if (state == MODE_SMS_STATE_STOP) return false;
+	
+	return xTimerIsTimerActive(xModeSmsControlTimer) == pdFALSE;
 }
 
 uint8_t ucModeSmsGetState(void)
@@ -380,6 +408,7 @@ static void prvModeSmsControlCallback(void *pvParameters)
 	switch (state)
 	{
 		case MODE_SMS_STATE_STOP:
+			xTimerStop(xModeSmsControlTimer, 0);
 			break;
 		case MODE_SMS_STATE_WAKE_SM:
 			{

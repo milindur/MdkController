@@ -51,10 +51,13 @@ uint32_t ulModeSmsGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uin
 void vModeSmsStart(void);
 void vModeSmsStartCameraTest(void);
 void vModeSmsStartExposeNow(void);
+void vModeSmsPause(void);
+void vModeSmsResume(void);
 void vModeSmsStop(void);
 bool bModeSmsGetCameraTestMode(void);
 uint8_t ucModeSmsGetState(void);
 bool bModeSmsGetFinished(void);
+bool bModeSmsGetPaused(void);
 uint32_t ulModeSmsGetCurrentCycle(void);
 uint32_t ulModeSmsGetRemainingCycles(void);
 uint32_t ulModeSmsGetOverallCycles(void);
