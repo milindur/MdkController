@@ -20,6 +20,7 @@
 #include "sm.h"
 #include "ble.h"
 #include "mode_sms.h"
+#include "mode_pano.h"
 
 #define mainCHECK_TIMER_RATE                    (500 / portTICK_RATE_MS)
 
@@ -55,6 +56,7 @@ int main(void)
 	vSmInit();
 	vBleInit();
 	vModeSmsInit();
+	vModePanoInit();
 	
 	xTimerHandle xCheckTimer = xTimerCreate(
 		(const char * const) "ChkTmr",

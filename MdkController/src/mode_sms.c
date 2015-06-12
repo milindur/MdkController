@@ -126,7 +126,7 @@ uint32_t ulModeSmsGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uin
 void vModeSmsPause(void)
 {
 	if (state == MODE_SMS_STATE_STOP) return;
-	if (bModeSmsGetPaused()) return;
+	if (bModeSmsIsPaused()) return;
 	
 	xTimerStop(xModeSmsControlTimer, 0);
 }
@@ -134,7 +134,7 @@ void vModeSmsPause(void)
 void vModeSmsResume(void)
 {
 	if (state == MODE_SMS_STATE_STOP) return;
-	if (!bModeSmsGetPaused()) return;
+	if (!bModeSmsIsPaused()) return;
 	
 	xTimerStart(xModeSmsControlTimer, 0);
 }
@@ -257,7 +257,7 @@ bool bModeSmsGetCameraTestMode(void)
 	return v;
 }
 
-bool bModeSmsGetFinished(void)
+bool bModeSmsIsFinished(void)
 {
 	bool v;
 	
@@ -271,11 +271,16 @@ bool bModeSmsGetFinished(void)
 	return v;
 }
 
-bool bModeSmsGetPaused(void)
+bool bModeSmsIsPaused(void)
 {
 	if (state == MODE_SMS_STATE_STOP) return false;
 	
 	return xTimerIsTimerActive(xModeSmsControlTimer) == pdFALSE;
+}
+
+bool bModeSmsIsRunning(void)
+{
+	return state != MODE_SMS_STATE_STOP;
 }
 
 uint8_t ucModeSmsGetState(void)

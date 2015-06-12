@@ -5,7 +5,7 @@
 #include "sm.h"
 #include "eep.h"
 
-#define EEP_VERSION 0x0101
+#define EEP_VERSION 0x0102
 #define EEP_CHECK   0xaa55
 
 #define EEP_BASE_ADDRESS 0x000FFC00
@@ -41,7 +41,7 @@ const eep_params_t eep_params_def = {
 	.mode_sms_pre_time = 0,
 	.mode_sms_focus_time = 100,
 	.mode_sms_exposure_time = 100,
-	.mode_sms_post_time = 100,
+	.mode_sms_post_time = 800,
 	.mode_sms_optimize_accel = 1,
 	.mode_sms_interval = 8000,
 	.mode_sms_count = 100,
@@ -54,6 +54,18 @@ const eep_params_t eep_params_def = {
 		.pos = { 0, 0, 0 }
 	},
 	.mode_sms_positions[2] = {
+		.pos = { 0, 0, 0 }
+	},
+	.mode_pano_position_start = {
+		.pos = { 0, 0, 0 }
+	},
+	.mode_pano_position_stop = {
+		.pos = { 0, 0, 0 }
+	},
+	.mode_pano_position_ref_start = {
+		.pos = { 0, 0, 0 }
+	},
+	.mode_pano_position_ref_stop = {
 		.pos = { 0, 0, 0 }
 	}
 };
