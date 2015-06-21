@@ -570,6 +570,12 @@ del /f mdkcontroller.zip
     <Folder Include="src\RTT\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\mode_astro.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\mode_astro.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\mode_pano.c">
       <SubType>compile</SubType>
     </Compile>

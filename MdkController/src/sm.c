@@ -53,6 +53,10 @@
 
 #define SM_MIN_STEALTH_STEP_DELAY	(A_T_x1000 / SM_MAX_STEALTH_SPEED_STEPS)
 
+#define SIDEREAL_FACTOR		(0.99726958)
+#define ASTRO_SPEED			((int32_t)(190*2*M_PI*1000/(24*3600)))
+#define ASTRO_STEP_DELAY	((uint32_t)(A_T_x1000/(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR))))
+
 #define CW  1
 #define CCW 0
 
@@ -356,7 +360,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	
 	if ((sm_state != SM_STATE_STOP) && (sm_state != SM_STATE_CONT))
 	{
-		return 1;
+		return false;
 	}
 	
 	sm_state_t * state = &_state[motor];
@@ -371,7 +375,6 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	{
 		if (speed != 0)
 		{
-			state->run_state = SM_STATE_CONT;
 			state->speed_cont_current_mrad = 0;
 			state->speed_cont_target_mrad = speed;
 
@@ -382,6 +385,9 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 				step_delay_tmp = INT32_MAX;
 			}
 			state->step_delay = step_delay_tmp;
+
+			state->stop_cont = false;
+			state->run_state = SM_STATE_CONT;
 	
 			if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 
@@ -397,6 +403,47 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 		{
 			state->stop_cont = true;
 		}
+	}
+	
+	taskEXIT_CRITICAL();
+	
+	return true;
+}
+
+bool bSmMoveContinuousAstro(uint8_t motor)
+{
+	taskENTER_CRITICAL();
+	
+	uint8_t sm_state = ucSmGetState(motor);
+	
+	if ((sm_state != SM_STATE_STOP) && (sm_state != SM_STATE_CONT_SLOW))
+	{
+		return false;
+	}
+	
+	sm_state_t * state = &_state[motor];
+
+	SEGGER_RTT_printf(0, "move cont astro [%d]: %d\n", motor, ASTRO_SPEED);
+
+	if (sm_state == SM_STATE_STOP)
+	{
+		state->speed_cont_current_mrad = ASTRO_SPEED;
+		state->speed_cont_target_mrad = ASTRO_SPEED;
+		state->step_delay = ASTRO_STEP_DELAY;
+		state->stop_cont = false;
+		state->run_state = SM_STATE_CONT_SLOW;
+			
+		if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
+
+		// Run Timer/Counter.
+		tc_write_rc(TC0, motor, 10);
+		tc_start(TC0, motor);
+	}
+	else
+	{
+		state->speed_cont_current_mrad = 0;
+		state->speed_cont_target_mrad = 0;
+		state->stop_cont = true;
 	}
 	
 	taskEXIT_CRITICAL();
@@ -485,6 +532,7 @@ void prvContinuousControlTask(void *pvParameters)
 					state->cont_ealt = 0.0f;
 				}
 			}
+
 			taskEXIT_CRITICAL();
 
 			state->cont_ealt = e;
@@ -655,6 +703,9 @@ void vSmStop(uint8_t motor)
 		break;
 	case SM_STATE_CONT:
 		bSmMoveContinuous(motor, 0);
+		break;
+	case SM_STATE_CONT_SLOW:
+		state->run_state = SM_STATE_STOP;
 		break;
 	}
 
@@ -863,6 +914,7 @@ void prvSmIsrHandler(uint8_t motor)
 		}
 		break;
 	case SM_STATE_CONT:
+	case SM_STATE_CONT_SLOW:
 		{
 			int32_t cur = (int32_t) state->speed_cont_current_mrad;
 			if (cur != 0)

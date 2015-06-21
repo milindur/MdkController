@@ -23,6 +23,7 @@
 #include "ble.h"
 #include "mode_sms.h"
 #include "mode_pano.h"
+#include "mode_astro.h"
 #include "cam.h"
 #include "io.h"
 #include "utils.h"
@@ -187,6 +188,17 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 					vModePanoStart();
 				}
 			}
+			else if (mode == MOCO_MODE_ASTRO)
+			{
+				if (bModeAstroIsPaused())
+				{
+					vModeAstroResume();
+				}
+				else
+				{
+					vModeAstroStart();
+				}
+			}
 									
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
@@ -202,6 +214,10 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			{
 				vModePanoPause();
 			}
+			else if (mode == MOCO_MODE_ASTRO)
+			{
+				vModeAstroPause();
+			}
 		
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
@@ -216,6 +232,10 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			else if (mode == MOCO_MODE_PANO)
 			{
 				vModePanoStop();
+			}
+			else if (mode == MOCO_MODE_ASTRO)
+			{
+				vModeAstroStop();
 			}
 						
 			prvBleUpdateMoCoControlPointTxOk();
@@ -326,7 +346,7 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Run Status\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			if (bModeSmsIsRunning() || bModePanoIsRunning())
+			if (bModeSmsIsRunning() || bModePanoIsRunning() || bModeAstroIsRunning())
 			{
 				result[1] = 2;
 			}
@@ -345,7 +365,7 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 	case 0x76:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get SMS / Continuous Program Mode\n");
-			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
+			uint8_t result[] = { MOCO_VALUE_BYTE, mode };
 			prbBleUpdateMoCoControlPointTx(result, 2);
 			return true;
 		}
@@ -379,7 +399,7 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Program Complete?\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			if (bModeSmsIsFinished() || bModePanoIsFinished())
+			if (bModeSmsIsFinished() || bModePanoIsFinished() || bModeAstroIsFinished())
 			{
 				result[1] = 1;
 			}

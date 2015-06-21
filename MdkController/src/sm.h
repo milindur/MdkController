@@ -32,11 +32,12 @@
 #define SM_CW  1
 #define SM_CCW 0
 
-#define SM_STATE_STOP  0
-#define SM_STATE_ACCEL 1
-#define SM_STATE_DECEL 2
-#define SM_STATE_RUN   3
-#define SM_STATE_CONT  4
+#define SM_STATE_STOP		0
+#define SM_STATE_ACCEL		1
+#define SM_STATE_DECEL		2
+#define SM_STATE_RUN		3
+#define SM_STATE_CONT		4
+#define SM_STATE_CONT_SLOW  5
 
 void vSmInit();
 void vSmSetMicrostepMode(uint8_t motor, uint8_t mode);
@@ -48,6 +49,7 @@ int32_t lSmGetMaxSpeed(uint8_t motor);
 uint8_t ucSmMove(uint8_t motor, int32_t step);
 uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, uint16_t decel);
 bool bSmMoveContinuous(uint8_t motor, int32_t speed);
+bool bSmMoveContinuousAstro(uint8_t motor);
 void vSmStop(uint8_t motor);
 void vSmEmergencyStop(uint8_t motor);
 void vSmResetPosition(uint8_t motor);
