@@ -582,6 +582,12 @@ del /f mdkcontroller.zip
     <Compile Include="src\mode_pano.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\mode_video.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\mode_video.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\version.c">
       <SubType>compile</SubType>
     </Compile>

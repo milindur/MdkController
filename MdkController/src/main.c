@@ -20,6 +20,7 @@
 #include "sm.h"
 #include "ble.h"
 #include "mode_sms.h"
+#include "mode_video.h"
 #include "mode_pano.h"
 #include "mode_astro.h"
 
@@ -57,6 +58,7 @@ int main(void)
 	vSmInit();
 	vBleInit();
 	vModeSmsInit();
+	vModeVideoInit();
 	vModePanoInit();
 	vModeAstroInit();
 	

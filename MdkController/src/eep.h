@@ -40,6 +40,9 @@ typedef struct {
 	
 	eep_mode_sms_position_params_t mode_sms_positions[MODE_SMS_MAX_KEY_FRAMES];
 	
+	uint32_t mode_video_duration[SM_MOTORS_USED];
+	uint8_t mode_video_ping_pong;
+	
 	eep_mode_sms_position_params_t mode_pano_position_start;
 	eep_mode_sms_position_params_t mode_pano_position_stop;
 	eep_mode_sms_position_params_t mode_pano_position_ref_start;
