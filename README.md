@@ -9,6 +9,23 @@ Motion-Controller zur Ansteuerung von 3 Schrittmotoren für Foto-, Zeitraffer- u
 4. Momentan ist der Zeitraffer SMS Modus und ein Videomodus umgesetzt (und natürlich Panorama und Astro). Es fehlen allerdings noch Rampen (Lead-in/out; Ramp-in/out). Diese kommen jedoch kurzfristig mit dem nächsten Firmware-Update.
 5. Es werden derzeit 2 Key-Frames (also Start und Ende) unterstützt. Da dies aber für manche Aufnahmen nicht ausreicht - wie ich selbst auch auf La Palma festgestellt habe -, ist geplant die Anzahl der Key-Frames auf min. 3 (besser noch mehr) zu erhöhen (sowohl für SMS als auch Video).
 
+## Update der Firmware (Windows)
+
+1. Das Update erfolgt per USB, dazu muss der Controller mit dem rechten USB-Port am PC angeschlossen werden. Eine weitere Spannungsversorgung per DC-Buchse ist dafür nicht notwendig.
+2. Die ZIP-Datei mdkcontroller-firmware-vXXX.zip enthält auch die Arduino-Treiber, falls diese erforderlich sein sollten. Nach Installation der Treiber erscheint der Arduino Due als serielle Schnittstelle im System. Die Nr. des COM-Ports ist im Geräte-Manager ermittelbar.
+3. Das eigentliche Update erfolgt mit Hilfe der Datei "flash.bat" (wird zukünftig noch durch ein Tool ausgetauscht). Diese muss zuvor jedoch in einem Texteditor geöffnet werden, um dort in der dritten Zeile (z.B. COM5: `set PORT=COM5`) den richtigen COM-Port einzutragen.
+  ```
+  @echo off
+  
+  set PORT=COM5
+  
+  mode %PORT%:1200 > nul
+  timeout /T 1 > nul
+  bossac --port=%PORT% -U false -e -w -v -b MdkController.bin -R
+  
+  pause
+  ```
+4. Anschließend kann das Update per Doppelklick auf "flash.bat" gestartet werden. Es öffnet sich ein Textfenster mit Informationen zum Fortschritt.
 
 ## Hardware
 
