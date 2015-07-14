@@ -1,7 +1,16 @@
 # MDK Controller
 Motion-Controller zur Ansteuerung von 3 Schrittmotoren für Foto-, Zeitraffer- und Videoanwendungen.
 
-Details zur Hardware:
+## Firmware
+
+1. Die Steuerung des Controllers erfolgt per MoCoBus-kompatiblen Protokoll. Damit werden neben der MDK Control App auch andere MoCoBus-kompatible Apps verwendet werden können. Hier denke ich insb. auch an qDDB mit der Motion-Control-Unterstützung, welche momentan entwickelt wird.
+2. Es gibt ein paar Erweiterungen gegenüber MoCoBus für die Astronachführung und die Panoramafunktion. Diese können nur mit der MDK Control App benutzt werden.
+3. Die Astronachführung funktioniert derzeit nur mit dem MDKv5, da die Geschwindigkeit genau auf die Getriebe-Untersetzung des MDKv5 abgestimmt ist. Um die notwendige extrem niedrige Geschwindigkeit erreichen zu können, ist die große Untersetzung von ca. 190:1 des MDKv5 erforderlich.
+4. Momentan ist der Zeitraffer SMS Modus und ein Videomodus umgesetzt (und natürlich Panorama und Astro). Es fehlen allerdings noch Rampen (Lead-in/out; Ramp-in/out). Diese kommen jedoch kurzfristig mit dem nächsten Firmware-Update.
+5. Es werden derzeit 2 Key-Frames (also Start und Ende) unterstützt. Da dies aber für manche Aufnahmen nicht ausreicht - wie ich selbst auch auf La Palma festgestellt habe -, ist geplant die Anzahl der Key-Frames auf min. 3 (besser noch mehr) zu erhöhen (sowohl für SMS als auch Video).
+
+
+## Hardware
 
 1. Als Basisboard wird zwar ein Arduino verwendet, es kommt jedoch der Arduino Due zum Einsatz. Es handelt sich dabei um einen ARM Cortex-M3 32-Bit Mikrocontroller von Atmel, der deutlich mehr Performance als ein Arduino Mega 2560 hat.
 2. Bedienung des Controllers per App via Bluetooth v4.0
