@@ -19,9 +19,10 @@
 #define mode_videoCONTROL_TIMER_RATE     (10 / portTICK_RATE_MS)
 
 static uint8_t state = MODE_VIDEO_STATE_STOP;
+static uint8_t move_state[SM_MOTORS_USED];
 static bool finished = false;
 static bool start_to_end = true;
-static uint32_t step_timer;
+static uint32_t step_timer[SM_MOTORS_USED];
 static uint32_t remaining_time;
 static uint32_t overall_time;
 static uint32_t elapsed_time;
@@ -88,8 +89,21 @@ void vModeVideoStart(void)
 	
 	taskENTER_CRITICAL();
 	{
-		step_timer = 0;
-   
+        for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+        {
+			if (eep_params.mode_sms_accel_count[motor] == 0)
+			{
+    			eep_params.mode_sms_accel_count[motor] = 1;
+			}
+			if (eep_params.mode_sms_decel_count[motor] == 0)
+			{
+    			eep_params.mode_sms_decel_count[motor] = 1;
+			}
+			
+            move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN;
+		    step_timer[motor] = 0;
+        }
+
         vModeVideoCalcTime();
 		
 		overall_time = eep_params.mode_sms_count * eep_params.mode_sms_interval;
@@ -200,9 +214,12 @@ void vModeVideoCalcTime(void)
 
 static void prvModeVideoControlCallback(void *pvParameters)
 {
-	if (state >= MODE_VIDEO_STATE_MOVE && state <= MODE_VIDEO_STATE_WAIT_MOVE)
+	if (state == MODE_VIDEO_STATE_MOVE)
 	{
-		step_timer += 10;
+		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+		{
+    		step_timer[motor] += 10;
+		}
 	}
 
 	switch (state)
@@ -236,7 +253,11 @@ static void prvModeVideoControlCallback(void *pvParameters)
             {
                 state = MODE_VIDEO_STATE_MOVE;
 				SEGGER_RTT_printf(0, "ModeVideo Control State Change: WAIT_PRE_TIME\n");
-                step_timer = 0;
+                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+                {
+                    move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN;
+                    step_timer[motor] = 0;
+                }
 				start_to_end = true;
             }                
 		    break;
@@ -244,31 +265,89 @@ static void prvModeVideoControlCallback(void *pvParameters)
             {
 				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
-					// calculate available time for video movement
-					int32_t avail_move_time = eep_params.mode_video_duration[motor];
-				
-					// sanity check
-					if (avail_move_time < 100) avail_move_time = 100;
-
-					int32_t steps = 0;
-					if (start_to_end)
-					{
-						steps = eep_params.mode_sms_positions[1].pos[motor] - lSmGetPosition(motor);
-					}
-					else
-					{
-						steps = eep_params.mode_sms_positions[0].pos[motor] - lSmGetPosition(motor);
-					}
-				
-					if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
+                    switch (move_state[motor])
+                    {
+                        case MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN:
+                            if (step_timer[motor] >= eep_params.mode_sms_leadin_count[motor])
+                            {
+                                move_state[motor] = MODE_VIDEO_STATE_MOVE_RUN;
+                            }
+                            break;
+                        case MODE_VIDEO_STATE_MOVE_RUN:
+                            {
+					            // calculate available time for video movement
+					            int32_t move_time = eep_params.mode_video_duration[motor];
+                                int32_t ramp_time = eep_params.mode_sms_accel_count[motor] + eep_params.mode_sms_decel_count[motor];
+                                int32_t run_time = move_time - ramp_time;
 					
-					uint16_t accel = SM_STEPS_TO_MRAD(eep_params.sm[motor].accel_steps);
-					uint16_t max_speed = SM_STEPS_TO_MRAD(abs(steps) * 1000 / avail_move_time);
-					ucSmMoveEx(motor, steps, max_speed, accel, accel);
+					            // sanity checks
+					            if (move_time < 100) move_time = 100;
+                                if (run_time < 100) run_time = 100;
+
+					            int32_t steps = 0;
+					            if (start_to_end)
+					            {
+    					            steps = eep_params.mode_sms_positions[1].pos[motor] - lSmGetPosition(motor);
+					            }
+					            else
+					            {
+    					            steps = eep_params.mode_sms_positions[0].pos[motor] - lSmGetPosition(motor);
+					            }
+					
+					            if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
+					
+                                int32_t max_speed_steps = 2000 * labs(steps) / (2 * run_time + ramp_time);
+                                int32_t accel_steps = max_speed_steps * 1000 / (int32_t)eep_params.mode_sms_accel_count[motor];
+                                int32_t decel_steps = max_speed_steps * 1000 / (int32_t)eep_params.mode_sms_decel_count[motor];
+
+							    max_speed_steps = utilsMIN(max_speed_steps, eep_params.sm[motor].speed_max_steps);
+							    max_speed_steps = utilsMAX(max_speed_steps, SM_SPR/16);
+							    accel_steps = utilsMIN(accel_steps, eep_params.sm[motor].accel_steps);
+							    accel_steps = utilsMAX(accel_steps, SM_SPR/16);
+							    decel_steps = utilsMIN(decel_steps, eep_params.sm[motor].decel_steps);
+							    decel_steps = utilsMAX(decel_steps, SM_SPR/16);
+
+							    uint16_t max_speed = SM_STEPS_TO_MRAD(max_speed_steps);
+                                uint16_t accel = SM_STEPS_TO_MRAD(accel_steps);
+                                uint16_t decel = SM_STEPS_TO_MRAD(decel_steps);
+							
+					            ucSmMoveEx(motor, steps, max_speed, accel, decel);
+
+                                move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_RUN;
+                            }
+                            break;
+                        case MODE_VIDEO_STATE_MOVE_WAIT_RUN:
+					        if (ucSmGetState(motor) == SM_STATE_STOP)
+					        {
+                                move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_OUT;
+                                step_timer[motor] = 0;
+					        }
+                            break;
+                        case MODE_VIDEO_STATE_MOVE_WAIT_LEAD_OUT:
+                            if (step_timer[motor] >= eep_params.mode_sms_leadout_count[motor])
+                            {
+                                move_state[motor] = MODE_VIDEO_STATE_MOVE_DONE;
+                            }
+                            break;
+                        case MODE_VIDEO_STATE_MOVE_DONE:
+                            break;
+                    }
 				}
 				
-				state = MODE_VIDEO_STATE_WAIT_MOVE;
-				SEGGER_RTT_printf(0, "ModeVideo Control State Change: WAIT_MOVE\n");
+                bool all_done = true;
+				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+				{
+    				if (move_state[motor] != MODE_VIDEO_STATE_MOVE_DONE)
+    				{
+        				all_done = false;
+        				continue;
+    				}
+				}
+                if (all_done)
+                {
+				    state = MODE_VIDEO_STATE_WAIT_MOVE;
+				    SEGGER_RTT_printf(0, "ModeVideo Control State Change: WAIT_MOVE\n");
+                }
             }
 			break;
 		case MODE_VIDEO_STATE_WAIT_MOVE:
@@ -288,6 +367,11 @@ static void prvModeVideoControlCallback(void *pvParameters)
 					if (eep_params.mode_video_ping_pong)
 					{
 						start_to_end = !start_to_end;
+                        for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+                        {
+                            move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN;
+                            step_timer[motor] = 0;
+                        }
 						state = MODE_VIDEO_STATE_MOVE;
 						SEGGER_RTT_printf(0, "ModeVideo Control State Change: MOVE\n");
 					}
@@ -326,7 +410,6 @@ static void prvModeVideoControlCallback(void *pvParameters)
 				{
 					state = MODE_VIDEO_STATE_SLEEP_SM;
 					SEGGER_RTT_printf(0, "ModeVideo Control State Change: SLEEP_SM\n");
-					step_timer = 0;
 				}
 			}
 			break;

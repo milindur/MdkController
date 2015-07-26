@@ -9,7 +9,7 @@
 #ifndef MODE_VIDEO_H_
 #define MODE_VIDEO_H_
 
-#define MODE_VIDEO_MAX_KEY_FRAMES			3
+#define MODE_VIDEO_MAX_KEY_FRAMES			2
 
 #define MODE_VIDEO_MAX_TIME		 			999999
 #define MODE_VIDEO_MAX_TIME_HM              3599940
@@ -26,6 +26,12 @@
 #define MODE_VIDEO_STATE_GOTO_END			6
 #define MODE_VIDEO_STATE_WAIT_END			7
 #define MODE_VIDEO_STATE_SLEEP_SM           8
+
+#define MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN      0
+#define MODE_VIDEO_STATE_MOVE_RUN               1
+#define MODE_VIDEO_STATE_MOVE_WAIT_RUN          2
+#define MODE_VIDEO_STATE_MOVE_WAIT_LEAD_OUT     3
+#define MODE_VIDEO_STATE_MOVE_DONE              4
 
 void vModeVideoInit(void);
 void vModeVideoSetStartEnd(int32_t start, int32_t end);
