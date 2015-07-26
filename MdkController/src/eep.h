@@ -35,9 +35,11 @@ typedef struct {
     
 	uint32_t mode_sms_interval;
     uint32_t mode_sms_count;
-    uint16_t mode_sms_ramp_count;
-    uint16_t mode_sms_stall_count;
-	
+
+    uint32_t mode_sms_leadin_count[SM_MOTORS_USED];
+    uint32_t mode_sms_accel_count[SM_MOTORS_USED];
+    uint32_t mode_sms_decel_count[SM_MOTORS_USED];
+    uint32_t mode_sms_leadout_count[SM_MOTORS_USED];
 	eep_mode_sms_position_params_t mode_sms_positions[MODE_SMS_MAX_KEY_FRAMES];
 	
 	uint32_t mode_video_duration[SM_MOTORS_USED];

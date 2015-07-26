@@ -550,9 +550,9 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 		}
 	case 0x13:
 		{
-			uint16_t lead_in = __builtin_bswap16(*(uint16_t *)data);
+			uint32_t lead_in = __builtin_bswap32(*(uint32_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Lead-In Shots / Time %d\n", motor, lead_in);
-		
+			eep_params.mode_sms_leadin_count[motor] = lead_in;
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
 		}
@@ -561,7 +561,6 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 			uint32_t travel = __builtin_bswap32(*(uint32_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Travel Shots (SMS) / Time (Cont.) %d\n", motor, travel);
 			if (travel != 0) eep_params.mode_video_duration[motor] = travel;
-		
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
 		}
@@ -569,7 +568,7 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 		{
 			uint32_t accel = __builtin_bswap32(*(uint32_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Accel Shots / Time %d\n", motor, accel);
-		
+			eep_params.mode_sms_accel_count[motor] = accel;
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
 		}
@@ -577,15 +576,15 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 		{
 			uint32_t decel = __builtin_bswap32(*(uint32_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Decel Shots / Time %d\n", motor, decel);
-		
+			eep_params.mode_sms_decel_count[motor] = decel;
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
 		}
 	case 0x19:
 		{
-			uint16_t lead_out = __builtin_bswap16(*(uint16_t *)data);
+			uint32_t lead_out = __builtin_bswap32(*(uint32_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Lead-Out Shots / Time %d\n", motor, lead_out);
-		
+			eep_params.mode_sms_leadout_count[motor] = lead_out;
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
 		}
@@ -670,7 +669,25 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 	case 0x72:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Lead-In Shots / Time\n", motor);
-			uint32_t tmp = 0;
+			uint32_t tmp = eep_params.mode_sms_leadin_count[motor];
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			memcpy(&result[1], &tmp, 4);
+			prbBleUpdateMoCoControlPointTxOkData(result, 5);
+			return true;
+		}
+	case 0x73:
+		{
+			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Accel Shots / Time\n", motor);
+			uint32_t tmp = eep_params.mode_sms_accel_count[motor];
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
+			memcpy(&result[1], &tmp, 4);
+			prbBleUpdateMoCoControlPointTxOkData(result, 5);
+			return true;
+		}
+	case 0x74:
+		{
+			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Decel Shots / Time\n", motor);
+			uint32_t tmp = eep_params.mode_sms_decel_count[motor];
 			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateMoCoControlPointTxOkData(result, 5);
@@ -687,7 +704,7 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 	case 0x77:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Lead-Out Shots / Time\n", motor);
-			uint32_t tmp = 0;
+			uint32_t tmp = eep_params.mode_sms_leadout_count[motor];
 			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateMoCoControlPointTxOkData(result, 5);

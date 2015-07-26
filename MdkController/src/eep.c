@@ -5,7 +5,7 @@
 #include "sm.h"
 #include "eep.h"
 
-#define EEP_VERSION 0x0110
+#define EEP_VERSION 0x0112
 #define EEP_CHECK   0xaa55
 
 #define EEP_BASE_ADDRESS 0x000FFC00
@@ -45,20 +45,17 @@ const eep_params_t eep_params_def = {
 	.mode_sms_optimize_accel = 1,
 	.mode_sms_interval = 8000,
 	.mode_sms_count = 100,
-	.mode_sms_ramp_count = 0,
-	.mode_sms_stall_count = 0,
+	.mode_sms_leadin_count = { 0, 0, 0 },
+	.mode_sms_accel_count = { 0, 0, 0 },
+	.mode_sms_decel_count = { 0, 0, 0 },
+	.mode_sms_leadout_count = { 0, 0, 0 },
 	.mode_sms_positions[0] = {
 		.pos = { 0, 0, 0 }	
 	},
 	.mode_sms_positions[1] = {
 		.pos = { 0, 0, 0 }
 	},
-	.mode_sms_positions[2] = {
-		.pos = { 0, 0, 0 }
-	},
-	.mode_video_duration[0] = 10000,
-	.mode_video_duration[1] = 10000,
-	.mode_video_duration[2] = 10000,
+	.mode_video_duration = { 10000, 10000, 10000 },
 	.mode_video_ping_pong = 0,
 	.mode_pano_position_start = {
 		.pos = { 0, 0, 0 }

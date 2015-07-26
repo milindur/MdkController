@@ -9,7 +9,7 @@
 #ifndef MODE_SMS_H_
 #define MODE_SMS_H_
 
-#define MODE_SMS_MAX_KEY_FRAMES			3
+#define MODE_SMS_MAX_KEY_FRAMES			2
 
 #define MODE_SMS_MAX_TIME		 			999999
 #define MODE_SMS_MAX_TIME_HM              3599940
@@ -40,12 +40,6 @@ typedef struct {
 } mode_sms_setup_t;
 
 void vModeSmsInit(void);
-void vModeSmsSetParams(mode_sms_setup_t *params);
-void vModeSmsGetParams(mode_sms_setup_t *params);
-void vModeSmsSetStartEnd(int32_t start, int32_t end);
-void vModeSmsGetStartEnd(int32_t *start, int32_t *end);
-void vModeSmsSetInterval(uint32_t interval, uint32_t count, uint16_t ramp_count, uint16_t stall_count);
-void vModeSmsGetInterval(uint32_t *interval, uint32_t *count, uint16_t *ramp_count, uint16_t *stall_count);
 void vModeSmsUpdateIntervalToMinimum(void);
 uint32_t ulModeSmsGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time);
 void vModeSmsStart(void);

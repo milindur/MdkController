@@ -17,18 +17,21 @@
 #include "mode_sms.h"
 #include "utils.h"
 
-#define mode_smsTEST_NONE			0
-#define mode_smsTEST_CAMERA		1
-#define mode_smsTEST_EXPOSE_NOW	2
+#define mode_smsTEST_NONE               0
+#define mode_smsTEST_CAMERA             1
+#define mode_smsTEST_EXPOSE_NOW	        2
 
-#define mode_smsCONTROL_TIMER_RATE     (10 / portTICK_RATE_MS)
+#define mode_smsCONTROL_TIMER_RATE      (10 / portTICK_RATE_MS)
+
+#define mode_smsCOUNT_SUM_TOO_HIGH()    ((eep_params.mode_sms_leadin_count[motor] + eep_params.mode_sms_accel_count[motor] + eep_params.mode_sms_decel_count[motor] + eep_params.mode_sms_leadout_count[motor]) > (eep_params.mode_sms_count - 1))
 
 static uint8_t state = MODE_SMS_STATE_STOP;
 static bool finished = false;
 static uint8_t test_mode = mode_smsTEST_NONE;
 static uint32_t current_step;
 static uint32_t current_loop;
-static int32_t ramp_steps_x1000[SM_MOTORS_USED];
+static int32_t accel_steps_x1000[SM_MOTORS_USED];
+static int32_t decel_steps_x1000[SM_MOTORS_USED];
 static int32_t run_steps[SM_MOTORS_USED];
 static uint32_t step_timer;
 static uint32_t interval_timer;
@@ -59,57 +62,6 @@ void vModeSmsInit(void)
 		NULL,
 		prvModeSmsControlCallback);
 	configASSERT(xModeSmsControlTimer);
-}
-
-void vModeSmsSetParams(mode_sms_setup_t *params)
-{
-	eep_params.mode_sms_pre_time = params->pre_time;
-	eep_params.mode_sms_focus_time = params->focus_time;
-	eep_params.mode_sms_exposure_time = params->exposure_time;
-	eep_params.mode_sms_post_time = params->post_time;
-
-    vModeSmsUpdateIntervalToMinimum();
-}
-
-void vModeSmsGetParams(mode_sms_setup_t *params)
-{
-	params->pre_time = eep_params.mode_sms_pre_time;
-	params->focus_time = eep_params.mode_sms_focus_time;
-	params->exposure_time = eep_params.mode_sms_exposure_time;
-	params->post_time = eep_params.mode_sms_post_time;
-}
-
-void vModeSmsSetStartEnd(int32_t start, int32_t end)
-{
-    eep_params.mode_sms_positions[0].pos[0] = start;
-    eep_params.mode_sms_positions[1].pos[0] = end;
-
-#if DEBUG
-    vEepSave();
-#endif
-}
-
-void vModeSmsGetStartEnd(int32_t *start, int32_t *end)
-{
-    *start = eep_params.mode_sms_positions[0].pos[0];
-    *end = eep_params.mode_sms_positions[1].pos[0];
-}
-
-void vModeSmsSetInterval(uint32_t interval, uint32_t count, uint16_t ramp_count, uint16_t stall_count)
-{
-    eep_params.mode_sms_interval = interval;
-    eep_params.mode_sms_count = count;
-    eep_params.mode_sms_ramp_count = ramp_count;
-    eep_params.mode_sms_stall_count = stall_count;
-    vEepSave();
-}
-
-void vModeSmsGetInterval(uint32_t *interval, uint32_t *count, uint16_t *ramp_count, uint16_t *stall_count)
-{
-    *interval = eep_params.mode_sms_interval;
-    *count = eep_params.mode_sms_count;
-    *ramp_count = eep_params.mode_sms_ramp_count;
-    *stall_count = eep_params.mode_sms_stall_count;
 }
 
 void vModeSmsUpdateIntervalToMinimum(void)
@@ -185,26 +137,59 @@ void vModeSmsStart(void)
 	{
 		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 		{
-			if (eep_params.mode_sms_count > 1)
+			if (eep_params.mode_sms_accel_count[motor] == 0)
 			{
-				int32_t steps = eep_params.mode_sms_positions[1].pos[motor] - eep_params.mode_sms_positions[0].pos[motor];
-				if (eep_params.mode_sms_ramp_count > 0)
+				eep_params.mode_sms_accel_count[motor] = 1;
+			}
+			if (eep_params.mode_sms_decel_count[motor] == 0)
+			{
+				eep_params.mode_sms_decel_count[motor] = 1;
+			}
+			
+			while (true)
+			{
+				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_leadin_count[motor] > 0)
 				{
-					int32_t run_count = eep_params.mode_sms_count - 2 * (eep_params.mode_sms_ramp_count - 1) - 2 * eep_params.mode_sms_stall_count - 1;
-					ramp_steps_x1000[motor] = steps * 1000 / (((int32_t)eep_params.mode_sms_ramp_count - 1) * (int32_t)eep_params.mode_sms_ramp_count + run_count * (int32_t)eep_params.mode_sms_ramp_count);
-					run_steps[motor] = (int32_t)eep_params.mode_sms_ramp_count * ramp_steps_x1000[motor] / 1000;
+					eep_params.mode_sms_leadin_count[motor]--;
 				}
-				else
+				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_leadout_count[motor] > 0)
 				{
-					int32_t run_count = eep_params.mode_sms_count - 2 * eep_params.mode_sms_stall_count;
-					ramp_steps_x1000[motor] = 0;
-					run_steps[motor] = steps / run_count;
-				}                
+    				eep_params.mode_sms_leadout_count[motor]--;
+				}
+				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_accel_count[motor] > 1)
+				{
+    				eep_params.mode_sms_accel_count[motor]--;
+				}
+				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_decel_count[motor] > 1)
+				{
+    				eep_params.mode_sms_decel_count[motor]--;
+				}
+				if (!mode_smsCOUNT_SUM_TOO_HIGH())
+				{
+    				break;
+				}
+			}
+
+			int32_t steps = eep_params.mode_sms_positions[1].pos[motor] - eep_params.mode_sms_positions[0].pos[motor];
+
+			int32_t img_count = (int32_t)eep_params.mode_sms_count;
+			int32_t step_count = (int32_t)eep_params.mode_sms_count - 1;
+			int32_t ramp_count = (int32_t)eep_params.mode_sms_accel_count[motor] + (int32_t)eep_params.mode_sms_decel_count[motor];
+			int32_t lead_count = (int32_t)eep_params.mode_sms_leadin_count[motor] + (int32_t)eep_params.mode_sms_leadout_count[motor];
+			int32_t move_count = step_count - lead_count;
+			int32_t run_count = step_count - lead_count - ramp_count;
+
+			if (move_count > 0 && steps != 0)
+			{
+                run_steps[motor] = 2 * steps / (2 * run_count + ramp_count);
+                accel_steps_x1000[motor] = run_steps[motor] * 1000 / (int32_t)eep_params.mode_sms_accel_count[motor];
+                decel_steps_x1000[motor] = run_steps[motor] * 1000 / (int32_t)eep_params.mode_sms_decel_count[motor];
 			}
 			else
 			{
-				ramp_steps_x1000[motor] = 0;
 				run_steps[motor] = 0;
+				accel_steps_x1000[motor] = 0;
+				decel_steps_x1000[motor] = 0;
 			}
 		}
 		
@@ -506,7 +491,11 @@ static void prvModeSmsControlCallback(void *pvParameters)
 				if (test_mode == mode_smsTEST_NONE)
 				{
 					// calculate available time for mode_sms movement
-					int32_t avail_move_time = eep_params.mode_sms_interval - (eep_params.mode_sms_pre_time + eep_params.mode_sms_post_time + eep_params.mode_sms_focus_time + eep_params.mode_sms_exposure_time);
+					int32_t avail_move_time = eep_params.mode_sms_interval 
+						- (eep_params.mode_sms_pre_time 
+							+ eep_params.mode_sms_post_time 
+							+ eep_params.mode_sms_focus_time 
+							+ eep_params.mode_sms_exposure_time);
 				
 					// reduce used time on ~90% and divide by 2 (for acceleration and deceleration)
 					avail_move_time = avail_move_time * 90 / 200;
@@ -518,28 +507,28 @@ static void prvModeSmsControlCallback(void *pvParameters)
 					{
 						int32_t steps = 0;
                 
-						if (current_step < eep_params.mode_sms_stall_count + 1)
+						if (current_step < eep_params.mode_sms_leadin_count[motor] + 1)
 						{
 							steps = 0;
 						}                
-						else if (current_step < eep_params.mode_sms_stall_count + eep_params.mode_sms_ramp_count)
+						else if (current_step < eep_params.mode_sms_leadin_count[motor] + eep_params.mode_sms_accel_count[motor])
 						{
-							steps = ramp_steps_x1000[motor] * ((int32_t)current_step - (int32_t)eep_params.mode_sms_stall_count) / 1000L;
+							steps = accel_steps_x1000[motor] * ((int32_t)current_step - (int32_t)eep_params.mode_sms_leadin_count[motor]) / 1000L;
 						}                
-						else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_ramp_count - eep_params.mode_sms_stall_count + 1)
+						else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_decel_count[motor] - eep_params.mode_sms_leadout_count[motor] + 1)
 						{
 							steps = run_steps[motor];
 						}                
-						else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_stall_count)
+						else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_leadout_count[motor])
 						{
-							steps = ramp_steps_x1000[motor] * ((int32_t)eep_params.mode_sms_count - (int32_t)eep_params.mode_sms_stall_count - (int32_t)current_step) / 1000L;
-						}                
+							steps = decel_steps_x1000[motor] * ((int32_t)eep_params.mode_sms_count - (int32_t)eep_params.mode_sms_leadout_count[motor] - (int32_t)current_step) / 1000L;
+						}
 						else
 						{
 							steps = 0;
 						}
                 
-						// prevent the mode_sms to move beyond the end position
+						// prevent the motor to move beyond the end position
 						if (eep_params.mode_sms_positions[1].pos[motor] - eep_params.mode_sms_positions[0].pos[motor] >= 0)
 						{
 							if (lSmGetPosition(motor) + steps > eep_params.mode_sms_positions[1].pos[motor])
@@ -566,7 +555,6 @@ static void prvModeSmsControlCallback(void *pvParameters)
 							uint16_t max_speed = accel * avail_move_time / 1000;
 								
 							ucSmMoveEx(motor, steps, max_speed, accel, accel);
-							//ucSmMoveEx(motor, steps, SM_STEPS_TO_MRAD(eep_params.sm[motor].speed_max_steps), accel, accel);
 						}
 						else
 						{
