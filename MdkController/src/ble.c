@@ -101,7 +101,7 @@ void vBleInit(void)
 	aci_state.aci_pins.optional_chip_sel_pin	= PIN_UNUSED;
 	aci_state.aci_pins.interface_is_interrupt	= true;
 
-	lib_aci_init(&aci_state, false);
+	lib_aci_init(&aci_state, true);
 
 	xTaskCreate(prvAciEventHandlerTask, "BleAciLoop", 600, NULL, 0, NULL);
 	
@@ -503,15 +503,15 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 		{
 			uint8_t microsteps = data[0];
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Microstep Value\n", motor);
-			//if (microsteps == 4)
+			if (microsteps == 4)
 			{
 				eep_params.sm[motor].microstep_mode = SM_MODE_STEALTH | SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
 			}
-			/*else if (microsteps == 8)
+			else //if (microsteps == 8)
 			{
 				eep_params.sm[motor].microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
 			}
-			else
+			/*else
 			{
 				eep_params.sm[motor].microstep_mode = SM_MODE_STEPS_DEFAULT;
 			}*/
