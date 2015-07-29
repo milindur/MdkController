@@ -276,8 +276,8 @@ static void prvModeVideoControlCallback(void *pvParameters)
                         case MODE_VIDEO_STATE_MOVE_RUN:
                             {
 					            // calculate available time for video movement
-					            int32_t move_time = eep_params.mode_video_duration[motor];
-                                int32_t ramp_time = eep_params.mode_sms_accel_count[motor] + eep_params.mode_sms_decel_count[motor];
+					            int32_t move_time = (int32_t)eep_params.mode_video_duration[motor];
+                                int32_t ramp_time = (int32_t)eep_params.mode_sms_accel_count[motor] + (int32_t)eep_params.mode_sms_decel_count[motor];
                                 int32_t run_time = move_time - ramp_time;
 					
 					            // sanity checks
@@ -296,9 +296,9 @@ static void prvModeVideoControlCallback(void *pvParameters)
 					
 					            if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 					
-                                int32_t max_speed_steps = 2000 * labs(steps) / (2 * run_time + ramp_time);
-                                int32_t accel_steps = max_speed_steps * 1000 / (int32_t)eep_params.mode_sms_accel_count[motor];
-                                int32_t decel_steps = max_speed_steps * 1000 / (int32_t)eep_params.mode_sms_decel_count[motor];
+                                int32_t max_speed_steps = (int32_t)((int64_t)2000 * (int64_t)labs(steps) / (int64_t)(2 * run_time + ramp_time));
+                                int32_t accel_steps = (int32_t)((int64_t)max_speed_steps * (int64_t)1000 / (int64_t)eep_params.mode_sms_accel_count[motor]);
+                                int32_t decel_steps = (int32_t)((int64_t)max_speed_steps * (int64_t)1000 / (int64_t)eep_params.mode_sms_decel_count[motor]);
 
 							    max_speed_steps = utilsMIN(max_speed_steps, eep_params.sm[motor].speed_max_steps);
 							    max_speed_steps = utilsMAX(max_speed_steps, SM_SPR/16);
