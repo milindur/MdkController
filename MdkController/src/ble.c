@@ -409,8 +409,22 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 	case 0x66:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Run Time\n");
-			uint32_t tmp = __builtin_bswap32(ulModeSmsGetCurrentTime());
-			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
+            uint32_t tmp = 0;
+			if (mode == MOCO_MODE_SMS)
+			{
+			    tmp = __builtin_bswap32(ulModeSmsGetCurrentTime());
+			}
+			else if (mode == MOCO_MODE_VIDEO_CONT)
+			{
+			    tmp = __builtin_bswap32(ulModeVideoGetCurrentTime());
+			}
+			else if (mode == MOCO_MODE_PANO)
+			{
+			}
+			else if (mode == MOCO_MODE_ASTRO)
+			{
+			}
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateMoCoControlPointTxOkData(result, 5);
 			return true;
@@ -435,15 +449,43 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Program %% Complete\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			result[1] = ucModeSmsGetProgress();
+			if (mode == MOCO_MODE_SMS)
+			{
+			    result[1] = ucModeSmsGetProgress();
+			}
+			else if (mode == MOCO_MODE_VIDEO_CONT)
+			{
+			    result[1] = ucModeVideoGetProgress();
+			}
+			else if (mode == MOCO_MODE_PANO)
+			{
+			    result[1] = ucModePanoGetProgress();
+			}
+			else if (mode == MOCO_MODE_ASTRO)
+			{
+			}
 			prbBleUpdateMoCoControlPointTxOkData(result, 2);
 			return true;
 		}
 	case 0x7D:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Total Program Run Time\n");
-			uint32_t tmp = __builtin_bswap32(ulModeSmsGetOverallTime());
-			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
+            uint32_t tmp = 0;
+            if (mode == MOCO_MODE_SMS)
+            {
+                tmp = __builtin_bswap32(ulModeSmsGetOverallTime());
+            }
+            else if (mode == MOCO_MODE_VIDEO_CONT)
+            {
+                tmp = __builtin_bswap32(ulModeVideoGetOverallTime());
+            }
+            else if (mode == MOCO_MODE_PANO)
+            {
+            }
+            else if (mode == MOCO_MODE_ASTRO)
+            {
+            }
+			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateMoCoControlPointTxOkData(result, 5);
 			return true;

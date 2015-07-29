@@ -23,6 +23,7 @@ static uint8_t move_state[SM_MOTORS_USED];
 static bool finished = false;
 static bool start_to_end = true;
 static uint32_t step_timer[SM_MOTORS_USED];
+static uint32_t interval_timer;
 static uint32_t remaining_time;
 static uint32_t overall_time;
 static uint32_t elapsed_time;
@@ -89,6 +90,8 @@ void vModeVideoStart(void)
 	
 	taskENTER_CRITICAL();
 	{
+        overall_time = 0;
+
         for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
         {
 			if (eep_params.mode_sms_accel_count[motor] == 0)
@@ -102,12 +105,12 @@ void vModeVideoStart(void)
 			
             move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN;
 		    step_timer[motor] = 0;
+
+            overall_time = utilsMAX(overall_time, eep_params.mode_sms_leadin_count[motor] + eep_params.mode_video_duration[motor] + eep_params.mode_sms_leadout_count[motor]);
         }
 
         vModeVideoCalcTime();
 		
-		overall_time = eep_params.mode_sms_count * eep_params.mode_sms_interval;
-
 		state = MODE_VIDEO_STATE_WAKE_SM;
 		xTimerStart(xModeVideoControlTimer, 0);
 	}
@@ -172,7 +175,10 @@ uint8_t ucModeVideoGetState(void)
 
 uint8_t ucModeVideoGetProgress(void)
 {
-	return 0;
+	int16_t progress = 100 * elapsed_time / overall_time;
+	if (progress > 100) progress = 100;
+	if (progress < 0) progress = 0;
+	return (uint8_t)progress;
 }
 
 uint32_t ulModeVideoGetRemainingTime(void)
@@ -208,8 +214,8 @@ uint32_t ulModeVideoGetOverallTime(void)
 
 void vModeVideoCalcTime(void)
 {
-    //remaining_time = (eep_params.mode_sms_count - current_loop) * eep_params.mode_sms_interval - interval_timer;
-	//elapsed_time = current_loop * eep_params.mode_sms_interval + interval_timer;
+    remaining_time = overall_time - interval_timer;
+	elapsed_time = interval_timer;
 }
 
 static void prvModeVideoControlCallback(void *pvParameters)
@@ -220,6 +226,8 @@ static void prvModeVideoControlCallback(void *pvParameters)
 		{
     		step_timer[motor] += 10;
 		}
+
+        interval_timer += 10;
 	}
 
 	switch (state)
@@ -258,6 +266,7 @@ static void prvModeVideoControlCallback(void *pvParameters)
                     move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN;
                     step_timer[motor] = 0;
                 }
+                interval_timer = 0;
 				start_to_end = true;
             }                
 		    break;
@@ -367,6 +376,7 @@ static void prvModeVideoControlCallback(void *pvParameters)
 					if (eep_params.mode_video_ping_pong)
 					{
 						start_to_end = !start_to_end;
+                        interval_timer = 0;
                         for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                         {
                             move_state[motor] = MODE_VIDEO_STATE_MOVE_WAIT_LEAD_IN;
