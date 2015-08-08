@@ -54,7 +54,7 @@
 #define SM_MIN_STEALTH_STEP_DELAY	(A_T_x1000 / SM_MAX_STEALTH_SPEED_STEPS)
 
 #define SIDEREAL_FACTOR		(0.99726958)
-#define ASTRO_SPEED			((int32_t)(190*2*M_PI*1000/(24*3600)))
+#define ASTRO_SPEED			((int32_t)(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR)))
 #define ASTRO_STEP_DELAY	((uint32_t)(A_T_x1000/(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR))))
 
 #define CW  1
@@ -354,8 +354,6 @@ int32_t lSmGetMaxSpeed(uint8_t motor)
 
 bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 {
-	taskENTER_CRITICAL();
-	
 	uint8_t sm_state = ucSmGetState(motor);
 	
 	if ((sm_state != SM_STATE_STOP) && (sm_state != SM_STATE_CONT))
@@ -363,6 +361,8 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 		return false;
 	}
 	
+	taskENTER_CRITICAL();
+
 	sm_state_t * state = &_state[motor];
 
 	int32_t max_speed = lSmGetMaxSpeed(motor);
@@ -410,41 +410,38 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	return true;
 }
 
-bool bSmMoveContinuousAstro(uint8_t motor)
+bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir)
 {
-	taskENTER_CRITICAL();
-	
 	uint8_t sm_state = ucSmGetState(motor);
 	
-	if ((sm_state != SM_STATE_STOP) && (sm_state != SM_STATE_CONT_SLOW))
+	if (sm_state != SM_STATE_STOP)
 	{
 		return false;
 	}
 	
+	taskENTER_CRITICAL();
+
 	sm_state_t * state = &_state[motor];
 
-	SEGGER_RTT_printf(0, "move cont astro [%d]: %d\n", motor, ASTRO_SPEED);
+	SEGGER_RTT_printf(0, "move cont astro [%d]: %d\n", motor, dir);
 
-	if (sm_state == SM_STATE_STOP)
-	{
-		state->speed_cont_current_mrad = ASTRO_SPEED;
-		state->speed_cont_target_mrad = ASTRO_SPEED;
-		state->step_delay = ASTRO_STEP_DELAY;
-		state->stop_cont = false;
-		state->run_state = SM_STATE_CONT_SLOW;
+    if (dir == SM_CW)
+    {
+	    state->speed_cont_current_mrad = ASTRO_SPEED;
+	    state->speed_cont_target_mrad = ASTRO_SPEED;
+    }
+    else
+    {
+        state->speed_cont_current_mrad = -1 * ASTRO_SPEED;
+        state->speed_cont_target_mrad = -1 * ASTRO_SPEED;
+    }
+	state->step_delay = ASTRO_STEP_DELAY;
+	state->stop_cont = false;
+	state->run_state = SM_STATE_CONT_SLOW;
 			
-		if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
-
-		// Run Timer/Counter.
-		tc_write_rc(TC0, motor, 10);
-		tc_start(TC0, motor);
-	}
-	else
-	{
-		state->speed_cont_current_mrad = 0;
-		state->speed_cont_target_mrad = 0;
-		state->stop_cont = true;
-	}
+	// Run Timer/Counter.
+	tc_write_rc(TC0, motor, 10);
+	tc_start(TC0, motor);
 	
 	taskEXIT_CRITICAL();
 	
@@ -669,7 +666,6 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
 
 		// Reset counter.
 		state->accel_decel_step_count = 0;
-
 
 		if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
 		SEGGER_RTT_printf(0, "move start [%d]: %u %u %d %d %d %u\n", motor, state->min_step_delay, state->step_delay, state->accel_decel_step_count, state->accel_val, state->decel_val, state->decel_start);

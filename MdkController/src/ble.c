@@ -222,7 +222,15 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 				}
 				else
 				{
-					vModeAstroStart();
+                    if (data_length == 1)
+                    {
+                        uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
+                        vModeAstroStart(dir);
+                    }
+                    else
+                    {
+                        vModeAstroStart(MODE_ASTRO_DIR_NORTH);
+                    }
 				}
 			}
 									
@@ -246,7 +254,7 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			}
 			else if (mode == MOCO_MODE_ASTRO)
 			{
-				vModeAstroPause();
+			    vModeAstroPause();
 			}
 		
 			prvBleUpdateMoCoControlPointTxOk();

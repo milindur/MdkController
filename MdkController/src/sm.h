@@ -49,7 +49,7 @@ int32_t lSmGetMaxSpeed(uint8_t motor);
 uint8_t ucSmMove(uint8_t motor, int32_t step);
 uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, uint16_t decel);
 bool bSmMoveContinuous(uint8_t motor, int32_t speed);
-bool bSmMoveContinuousAstro(uint8_t motor);
+bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir);
 void vSmStop(uint8_t motor);
 void vSmEmergencyStop(uint8_t motor);
 void vSmResetPosition(uint8_t motor);

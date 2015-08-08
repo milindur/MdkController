@@ -20,6 +20,7 @@
 #define mode_astroCONTROL_TIMER_RATE     (10 / portTICK_RATE_MS)
 
 static uint8_t state = MODE_ASTRO_STATE_STOP;
+static uint8_t direction = MODE_ASTRO_DIR_NORTH;
 static bool finished = false;
 static xTimerHandle xModeAstroControlTimer;
 
@@ -52,13 +53,14 @@ void vModeAstroResume(void)
 	xTimerStart(xModeAstroControlTimer, 0);
 }
 
-void vModeAstroStart(void)
+void vModeAstroStart(uint8_t dir)
 {
 	if (state != MODE_ASTRO_STATE_STOP) return;
 	
 	taskENTER_CRITICAL();
 	{
 		state = MODE_ASTRO_STATE_WAKE_SM;
+        direction = dir;
 		xTimerStart(xModeAstroControlTimer, 0);
 	}
 	taskEXIT_CRITICAL();
@@ -133,8 +135,7 @@ static void prvModeAstroControlCallback(void *pvParameters)
 			{
 				for (uint8_t motor = 0; motor < 1; motor++)
 				{
-					if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
-					if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
+					vSmEnable(motor, 2);
 				}
 			}
 			state = MODE_ASTRO_STATE_MOVE;
@@ -142,7 +143,7 @@ static void prvModeAstroControlCallback(void *pvParameters)
 			break;
 		case MODE_ASTRO_STATE_MOVE:
 			{
-				bSmMoveContinuousAstro(0);
+				bSmMoveContinuousAstro(0, direction == MODE_ASTRO_DIR_NORTH ? SM_CW : SM_CCW);
 				
 				state = MODE_ASTRO_STATE_WAIT_MOVE;
 				SEGGER_RTT_printf(0, "ModeAstro Control State Change: WAIT_MOVE\n");
