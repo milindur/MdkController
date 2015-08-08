@@ -14,9 +14,13 @@
 
 #define MODE_ASTRO_STATE_STOP				0
 #define MODE_ASTRO_STATE_WAKE_SM			1
-#define MODE_ASTRO_STATE_MOVE		        2
-#define MODE_ASTRO_STATE_WAIT_MOVE		    3
-#define MODE_ASTRO_STATE_SLEEP_SM           4
+#define MODE_ASTRO_STATE_BACKLASH_1			2
+#define MODE_ASTRO_STATE_WAIT_BACKLASH_1	3
+#define MODE_ASTRO_STATE_BACKLASH_2			4
+#define MODE_ASTRO_STATE_WAIT_BACKLASH_2	5
+#define MODE_ASTRO_STATE_MOVE		        6
+#define MODE_ASTRO_STATE_WAIT_MOVE		    7
+#define MODE_ASTRO_STATE_SLEEP_SM           8
 
 void vModeAstroInit(void);
 void vModeAstroStart(uint8_t dir);

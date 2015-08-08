@@ -138,9 +138,69 @@ static void prvModeAstroControlCallback(void *pvParameters)
 					vSmEnable(motor, 2);
 				}
 			}
-			state = MODE_ASTRO_STATE_MOVE;
-			SEGGER_RTT_printf(0, "ModeAstro Control State Change: MOVE\n");
+			state = MODE_ASTRO_STATE_BACKLASH_1;
+			SEGGER_RTT_printf(0, "ModeAstro Control State Change: BACKLASH_1\n");
 			break;
+        case MODE_ASTRO_STATE_BACKLASH_1:
+            {
+                int32_t steps = direction == MODE_ASTRO_DIR_NORTH ? -1 * SM_SPR : SM_SPR;
+
+				for (uint8_t motor = 0; motor < 1; motor++)
+				{
+    				ucSmMove(motor, steps);
+				}
+            }
+    		state = MODE_ASTRO_STATE_WAIT_BACKLASH_1;
+    		SEGGER_RTT_printf(0, "ModeAstro Control State Change: WAIT_BACKLASH_1\n");
+            break;
+        case MODE_ASTRO_STATE_WAIT_BACKLASH_1:
+            {
+				bool all_stoped = true;
+				for (uint8_t motor = 0; motor < 1; motor++)
+				{
+    				if (ucSmGetState(motor) != SM_STATE_STOP)
+    				{
+        				all_stoped = false;
+        				continue;
+    				}
+				}
+				if (all_stoped)
+				{
+    				state = MODE_ASTRO_STATE_BACKLASH_2;
+    				SEGGER_RTT_printf(0, "ModeAstro Control State Change: BACKLASH_2\n");
+				}
+            }
+            break;
+        case MODE_ASTRO_STATE_BACKLASH_2:
+            {
+                int32_t steps = direction == MODE_ASTRO_DIR_NORTH ? SM_SPR : -1 * SM_SPR;
+
+                for (uint8_t motor = 0; motor < 1; motor++)
+                {
+                    ucSmMove(motor, steps);
+                }
+            }
+    		state = MODE_ASTRO_STATE_WAIT_BACKLASH_2;
+    		SEGGER_RTT_printf(0, "ModeAstro Control State Change: WAIT_BACKLASH_2\n");
+            break;
+        case MODE_ASTRO_STATE_WAIT_BACKLASH_2:
+            {
+				bool all_stoped = true;
+				for (uint8_t motor = 0; motor < 1; motor++)
+				{
+    				if (ucSmGetState(motor) != SM_STATE_STOP)
+    				{
+        				all_stoped = false;
+        				continue;
+    				}
+				}
+				if (all_stoped)
+				{
+			        state = MODE_ASTRO_STATE_MOVE;
+			        SEGGER_RTT_printf(0, "ModeAstro Control State Change: MOVE\n");
+				}
+            }
+            break;
 		case MODE_ASTRO_STATE_MOVE:
 			{
 				bSmMoveContinuousAstro(0, direction == MODE_ASTRO_DIR_NORTH ? SM_CW : SM_CCW);
