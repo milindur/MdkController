@@ -407,7 +407,11 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Run Status\n");
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-			if (bModeSmsIsRunning() || bModeVideoIsRunning() || bModePanoIsRunning() || bModeAstroIsRunning())
+			if (bModeSmsIsPaused() || bModeVideoIsPaused() || bModePanoIsPaused() || bModeAstroIsPaused())
+			{
+    			result[1] = 1;
+			}
+			else if (bModeSmsIsRunning() || bModeVideoIsRunning() || bModePanoIsRunning() || bModeAstroIsRunning())
 			{
 				result[1] = 2;
 			}
