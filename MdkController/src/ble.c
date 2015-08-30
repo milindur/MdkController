@@ -1009,6 +1009,7 @@ void prvAciEventHandlerTask(void *pvParameters)
 						if (lib_aci_is_pipe_available(&aci_state, PIPE_NMX_NMX_RX_RX)
 							|| lib_aci_is_pipe_available(&aci_state, PIPE_NMX_NMX_RX_RX_ACK_AUTO))
 						{
+                            SEGGER_RTT_printf(0, "Request a change to the link timing\n");
 							/*
 							Request a change to the link timing as set in the GAP -> Preferred Peripheral Connection Parameters
 							Change the setting in nRFgo studio -> nRF8001 configuration -> GAP Settings and recompile the xml file.
