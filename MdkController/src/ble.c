@@ -307,7 +307,11 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 		}
 	case 0x16:
 		{
-			mode = data[0];
+			if (!(bModeSmsIsPaused() || bModeVideoIsPaused() || bModePanoIsPaused() || bModeAstroIsPaused()
+                || bModeSmsIsRunning() || bModeVideoIsRunning() || bModePanoIsRunning() || bModeAstroIsRunning()))
+			{
+			    mode = data[0];
+			}
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Mode %d\n", mode);
 			prvBleUpdateMoCoControlPointTxOk();
 			return true;
