@@ -715,6 +715,24 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 			prbBleUpdateMoCoControlPointTxOkData(result, 2);
 			return true;
 		}
+	case 0x6F:
+	    {
+    	    SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Program Start Point\n", motor);
+    	    int32_t tmp = __builtin_bswap32(eep_params.mode_sms_positions[0].pos[motor]);
+    	    uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
+    	    memcpy(&result[1], &tmp, 4);
+    	    prbBleUpdateMoCoControlPointTxOkData(result, 5);
+    	    return true;
+	    }
+	case 0x70:
+	    {
+    	    SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Program Stop Point\n", motor);
+    	    int32_t tmp = __builtin_bswap32(eep_params.mode_sms_positions[1].pos[motor]);
+    	    uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
+    	    memcpy(&result[1], &tmp, 4);
+    	    prbBleUpdateMoCoControlPointTxOkData(result, 5);
+    	    return true;
+	    }
 	case 0x71:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Travel Shots (SMS) / Time (Cont.)\n", motor);
@@ -873,7 +891,7 @@ bool prbBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x67:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Focus Time\n");
-			uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_exposure_time);
+			uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_focus_time);
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
 			prbBleUpdateMoCoControlPointTxOkData(result, 3);
