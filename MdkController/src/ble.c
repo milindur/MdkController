@@ -497,6 +497,7 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
             }
             else if (mode == MOCO_MODE_PANO)
             {
+                //tmp = __builtin_bswap32(ulModePanoGetOverallTime());
             }
             else if (mode == MOCO_MODE_ASTRO)
             {
@@ -900,7 +901,21 @@ bool prbBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x68:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Max Shots\n");
-			uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_count);
+			uint32_t tmp = 0;
+            if (mode == MOCO_MODE_SMS)
+            {
+                tmp = __builtin_bswap32(eep_params.mode_sms_count);
+            }
+            else if (mode == MOCO_MODE_VIDEO_CONT)
+            {
+            }
+            else if (mode == MOCO_MODE_PANO)
+            {
+                tmp = __builtin_bswap32(ulModePanoGetOverallCycles());
+            }
+            else if (mode == MOCO_MODE_ASTRO)
+            {
+            }
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateMoCoControlPointTxOkData(result, 5);
@@ -927,7 +942,21 @@ bool prbBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t 
 	case 0x6D:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Current Shots\n");
-			uint16_t tmp = __builtin_bswap16((uint16_t)ulModeSmsGetCurrentCycle());
+            uint16_t tmp = 0;
+            if (mode == MOCO_MODE_SMS)
+            {
+                tmp = __builtin_bswap16((uint16_t)ulModeSmsGetCurrentCycle());
+            }
+            else if (mode == MOCO_MODE_VIDEO_CONT)
+            {
+            }
+            else if (mode == MOCO_MODE_PANO)
+            {
+                tmp = __builtin_bswap16((uint16_t)ulModePanoGetCurrentCycle());
+            }
+            else if (mode == MOCO_MODE_ASTRO)
+            {
+            }
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
 			prbBleUpdateMoCoControlPointTxOkData(result, 3);

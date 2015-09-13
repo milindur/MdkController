@@ -21,6 +21,7 @@
 
 static uint8_t state = MODE_PANO_STATE_STOP;
 static bool finished = false;
+static uint32_t current_step;
 static uint32_t current_row;
 static uint32_t max_rows;
 static uint32_t current_col;
@@ -96,6 +97,7 @@ void vModePanoStart(void)
 		steps[1] = pan_steps_per_col;
 		steps[2] = tilt_steps_per_row;
 		
+        current_step = 0;
 		current_row = 0;
 		current_col = 0;
 		step_timer = 0;
@@ -151,6 +153,37 @@ bool bModePanoIsRunning(void)
 	return state != MODE_PANO_STATE_STOP;
 }
 
+uint32_t ulModePanoGetCurrentCycle(void)
+{
+    uint32_t v;
+    
+    taskENTER_CRITICAL();
+    {
+        v = current_step;
+    }
+    taskEXIT_CRITICAL();
+    
+    return v;
+}
+
+uint32_t ulModePanoGetRemainingCycles(void)
+{
+    uint32_t v;
+    
+    taskENTER_CRITICAL();
+    {
+        v = current_step;
+    }
+    taskEXIT_CRITICAL();
+    
+    return (max_rows + 1) * (max_cols + 1) - v;
+}
+
+uint32_t ulModePanoGetOverallCycles(void)
+{
+    return (max_rows + 1) * (max_cols + 1);
+}
+
 uint32_t ulModePanoGetCurrentRow(void)
 {
 	return current_col;
@@ -158,7 +191,7 @@ uint32_t ulModePanoGetCurrentRow(void)
 
 uint32_t ulModePanoGetOverallRows(void)
 {
-	return max_rows;
+	return max_rows + 1;
 }
 
 uint32_t ulModePanoGetCurrentCol(void)
@@ -168,12 +201,15 @@ uint32_t ulModePanoGetCurrentCol(void)
 
 uint32_t ulModePanoGetOverallCols(void)
 {
-	return max_cols;
+	return max_cols + 1;
 }
 
 uint8_t ucModePanoGetProgress(void)
 {
-	return 0;
+	int16_t progress = 100 * current_step / ((max_rows + 1) * (max_cols + 1));
+	if (progress > 100) progress = 100;
+	if (progress < 0) progress = 0;
+	return (uint8_t)progress;
 }
 
 uint8_t ucModePanoGetState(void)
@@ -243,6 +279,7 @@ static void prvModePanoControlCallback(void *pvParameters)
 		case MODE_PANO_STATE_WAIT_FOCUS_TIME:
 			if (step_timer >= eep_params.mode_sms_focus_time)
 			{
+                current_step++;
 				vCamShutter();
 			
 				state = MODE_PANO_STATE_WAIT_EXPOSURE_TIME;
