@@ -737,7 +737,23 @@ bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * 
 	case 0x71:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Travel Shots (SMS) / Time (Cont.)\n", motor);
-			uint32_t tmp = __builtin_bswap32(eep_params.mode_video_duration[motor]);
+            uint32_t tmp = 0;
+            if (mode == MOCO_MODE_SMS)
+            {
+                tmp = __builtin_bswap32(eep_params.mode_video_duration[motor]);
+            }
+            else if (mode == MOCO_MODE_VIDEO_CONT)
+            {
+                tmp = __builtin_bswap32(eep_params.mode_video_duration[motor]);
+            }
+            else if (mode == MOCO_MODE_PANO)
+            {
+                if (motor == 1) tmp = __builtin_bswap32(ulModePanoGetOverallCols());
+                if (motor == 2) tmp = __builtin_bswap32(ulModePanoGetOverallRows());
+            }
+            else if (mode == MOCO_MODE_ASTRO)
+            {
+            }
 			uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			prbBleUpdateMoCoControlPointTxOkData(result, 5);
