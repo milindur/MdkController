@@ -21,6 +21,7 @@
 
 static uint8_t state = MODE_ASTRO_STATE_STOP;
 static uint8_t direction = MODE_ASTRO_DIR_NORTH;
+static uint8_t speed = MODE_ASTRO_SPEED_SIDEREAL;
 static bool finished = false;
 static xTimerHandle xModeAstroControlTimer;
 
@@ -53,7 +54,7 @@ void vModeAstroResume(void)
 	xTimerStart(xModeAstroControlTimer, 0);
 }
 
-void vModeAstroStart(uint8_t dir)
+void vModeAstroStart(uint8_t dir, uint8_t spd)
 {
 	if (state != MODE_ASTRO_STATE_STOP) return;
 	
@@ -61,6 +62,7 @@ void vModeAstroStart(uint8_t dir)
 	{
 		state = MODE_ASTRO_STATE_WAKE_SM;
         direction = dir;
+        speed = spd;
 		xTimerStart(xModeAstroControlTimer, 0);
 	}
 	taskEXIT_CRITICAL();
@@ -203,7 +205,9 @@ static void prvModeAstroControlCallback(void *pvParameters)
             break;
 		case MODE_ASTRO_STATE_MOVE:
 			{
-				bSmMoveContinuousAstro(0, direction == MODE_ASTRO_DIR_NORTH ? SM_CW : SM_CCW);
+				bSmMoveContinuousAstro(0, 
+                    direction == MODE_ASTRO_DIR_NORTH ? SM_CW : SM_CCW, 
+                    speed == MODE_ASTRO_SPEED_SIDEREAL ? SM_ASTRO_SIDEREAL : SM_ASTRO_LUNAR);
 				
 				state = MODE_ASTRO_STATE_WAIT_MOVE;
 				SEGGER_RTT_printf(0, "ModeAstro Control State Change: WAIT_MOVE\n");

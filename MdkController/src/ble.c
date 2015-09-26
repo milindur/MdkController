@@ -185,10 +185,12 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			{
 				if (bModeSmsIsPaused())
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume SMS\n");
 					vModeSmsResume();
 				}
 				else
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start SMS\n");
 					vModeSmsStart();
 				}
 			}
@@ -196,10 +198,12 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			{
 				if (bModeVideoIsPaused())
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume Video\n");
 					vModeVideoResume();
 				}
 				else
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Video\n");
 					vModeVideoStart();
 				}
 			}
@@ -207,10 +211,12 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			{
 				if (bModePanoIsPaused())
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume Pano\n");
 					vModePanoResume();
 				}
 				else
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Pano\n");
 					vModePanoStart();
 				}
 			}
@@ -218,18 +224,28 @@ bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t da
 			{
 				if (bModeAstroIsPaused())
 				{
+			        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume Astro\n");
 					vModeAstroResume();
 				}
 				else
 				{
-                    if (data_length == 1)
+                    if (data_length == 2)
                     {
                         uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
-                        vModeAstroStart(dir);
+                        uint8_t spd = data[1] == 0 ? MODE_ASTRO_SPEED_SIDEREAL : MODE_ASTRO_SPEED_LUNAR;
+			            SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %d\n", dir, spd);
+                        vModeAstroStart(dir, spd);
+                    }
+                    else if (data_length == 1)
+                    {
+                        uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
+			            SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d\n", dir);
+                        vModeAstroStart(dir, MODE_ASTRO_SPEED_SIDEREAL);
                     }
                     else
                     {
-                        vModeAstroStart(MODE_ASTRO_DIR_NORTH);
+                        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro\n");
+                        vModeAstroStart(MODE_ASTRO_DIR_NORTH, MODE_ASTRO_SPEED_SIDEREAL);
                     }
 				}
 			}

@@ -53,9 +53,13 @@
 
 #define SM_MIN_STEALTH_STEP_DELAY	(A_T_x1000 / SM_MAX_STEALTH_SPEED_STEPS)
 
-#define SIDEREAL_FACTOR		(0.99726958)
-#define ASTRO_SPEED			((int32_t)(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR)))
-#define ASTRO_STEP_DELAY	((uint32_t)(A_T_x1000/(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR))))
+#define SIDEREAL_FACTOR		        (0.99726958)
+#define ASTRO_SIDEREAL_SPEED		((int32_t)(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR)))
+#define ASTRO_SIDEREAL_STEP_DELAY	((uint32_t)(A_T_x1000/(190*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR))))
+
+#define LUNAR_FACTOR		        (1.03387012)
+#define ASTRO_LUNAR_SPEED		    ((int32_t)(190*2*M_PI*1000/(24*3600*LUNAR_FACTOR)))
+#define ASTRO_LUNAR_STEP_DELAY	    ((uint32_t)(A_T_x1000/(190*2*M_PI*1000/(24*3600*LUNAR_FACTOR))))
 
 #define CW  1
 #define CCW 0
@@ -410,7 +414,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
 	return true;
 }
 
-bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir)
+bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, uint8_t mode)
 {
 	uint8_t sm_state = ucSmGetState(motor);
 	
@@ -423,19 +427,34 @@ bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir)
 
 	sm_state_t * state = &_state[motor];
 
-	SEGGER_RTT_printf(0, "move cont astro [%d]: %d\n", motor, dir);
+    int32_t astro_speed = 0;
+    uint32_t astro_step_delay = 0;
+
+    switch (mode)
+    {
+    case SM_ASTRO_SIDEREAL:
+        astro_speed = ASTRO_SIDEREAL_SPEED;
+        astro_step_delay = ASTRO_SIDEREAL_STEP_DELAY;
+        break;
+    case SM_ASTRO_LUNAR:
+        astro_speed = ASTRO_LUNAR_SPEED;
+        astro_step_delay = ASTRO_LUNAR_STEP_DELAY;
+        break;
+    }
+
+	SEGGER_RTT_printf(0, "move cont astro [%d]: %d/%d, %d, %d\n", motor, dir, mode, astro_speed, astro_step_delay);
 
     if (dir == SM_CW)
     {
-	    state->speed_cont_current_mrad = ASTRO_SPEED;
-	    state->speed_cont_target_mrad = ASTRO_SPEED;
+	    state->speed_cont_current_mrad = astro_speed;
+	    state->speed_cont_target_mrad = astro_speed;
     }
     else
     {
-        state->speed_cont_current_mrad = -1 * ASTRO_SPEED;
-        state->speed_cont_target_mrad = -1 * ASTRO_SPEED;
+        state->speed_cont_current_mrad = -1 * astro_speed;
+        state->speed_cont_target_mrad = -1 * astro_speed;
     }
-	state->step_delay = ASTRO_STEP_DELAY;
+	state->step_delay = astro_step_delay;
 	state->stop_cont = false;
 	state->run_state = SM_STATE_CONT_SLOW;
 			

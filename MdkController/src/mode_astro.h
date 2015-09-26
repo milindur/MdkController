@@ -12,6 +12,9 @@
 #define MODE_ASTRO_DIR_NORTH                0
 #define MODE_ASTRO_DIR_SOUTH                1
 
+#define MODE_ASTRO_SPEED_SIDEREAL           0
+#define MODE_ASTRO_SPEED_LUNAR              1
+
 #define MODE_ASTRO_STATE_STOP				0
 #define MODE_ASTRO_STATE_WAKE_SM			1
 #define MODE_ASTRO_STATE_BACKLASH_1			2
@@ -23,7 +26,7 @@
 #define MODE_ASTRO_STATE_SLEEP_SM           8
 
 void vModeAstroInit(void);
-void vModeAstroStart(uint8_t dir);
+void vModeAstroStart(uint8_t dir, uint8_t spd);
 void vModeAstroPause(void);
 void vModeAstroResume(void);
 void vModeAstroStop(void);
