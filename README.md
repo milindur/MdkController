@@ -16,6 +16,8 @@ Motion-Controller zur Ansteuerung von 3 Schrittmotoren für Foto-, Zeitraffer- u
 
 ## Update der Firmware (Windows)
 
+![Screenshot des Update-Tools](https://raw.githubusercontent.com/milindur/MdkControllerUpdate/master/images/mdk-controller-update.png)
+
 1. Das Update erfolgt per USB, dazu muss der Controller mit dem rechten USB-Port des Controllers ("PROG") am PC angeschlossen werden. Eine weitere Spannungsversorgung per DC-Buchse ist dafür nicht notwendig.
 2. Falls der Controller von Windows nicht automatisch erkannt wird, werden die entsprechenden Treiber benötigt.
    Diese können [hier](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.1/drivers.zip) heruntergeladen werden.
