@@ -1,6 +1,11 @@
 # MDK Controller
 Motion-Controller zur Ansteuerung von 3 Schrittmotoren für Foto-, Zeitraffer- und Videoanwendungen.
 
+## Downloads
+
+* [Update-Tool](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.1/MdkControllerUpdate.exe)
+* [Treiber](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.1/drivers.zip)
+
 ## Firmware
 
 1. Die Steuerung des Controllers erfolgt per MoCoBus-kompatiblen Protokoll. Damit werden neben der MDK Control App auch andere MoCoBus-kompatible Apps verwendet werden können. Hier denke ich insb. auch an qDDB mit der Motion-Control-Unterstützung, welche momentan entwickelt wird.
@@ -11,21 +16,12 @@ Motion-Controller zur Ansteuerung von 3 Schrittmotoren für Foto-, Zeitraffer- u
 
 ## Update der Firmware (Windows)
 
-1. Das Update erfolgt per USB, dazu muss der Controller mit dem rechten USB-Port am PC angeschlossen werden. Eine weitere Spannungsversorgung per DC-Buchse ist dafür nicht notwendig.
-2. Die ZIP-Datei mdkcontroller-firmware-vXXX.zip enthält auch die Arduino-Treiber, falls diese erforderlich sein sollten. Nach Installation der Treiber erscheint der Arduino Due als serielle Schnittstelle im System. Die Nr. des COM-Ports ist im Geräte-Manager ermittelbar.
-3. Das eigentliche Update erfolgt mit Hilfe der Datei "flash.bat" (wird zukünftig noch durch ein Tool ausgetauscht). Diese muss zuvor jedoch in einem Texteditor geöffnet werden, um dort in der dritten Zeile (z.B. COM5: `set PORT=COM5`) den richtigen COM-Port einzutragen.
-  ```
-  @echo off
-  
-  set PORT=COM5
-  
-  mode %PORT%:1200 > nul
-  timeout /T 1 > nul
-  bossac --port=%PORT% -U false -e -w -v -b MdkController.bin -R
-  
-  pause
-  ```
-4. Anschließend kann das Update per Doppelklick auf "flash.bat" gestartet werden. Es öffnet sich ein Textfenster mit Informationen zum Fortschritt.
+1. Das Update erfolgt per USB, dazu muss der Controller mit dem rechten USB-Port des Controllers ("PROG") am PC angeschlossen werden. Eine weitere Spannungsversorgung per DC-Buchse ist dafür nicht notwendig.
+2. Falls der Controller von Windows nicht automatisch erkannt wird, werden die entsprechenden Treiber benötigt.
+   Diese können [hier](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.1/drivers.zip) heruntergeladen werden.
+3. Das eigentliche Update erfolgt mit Hilfe des Update-Tools. Die aktuellste Version kann [hier](https://github.com/milindur/MdkControllerUpdate/releases) heruntergeladen werden (MdkControllerUpdate.exe).
+4. Das Update-Tool benötigt eine aktive Internetverbindung, um die Firmware herunterladen zu können.
+5. Nach Auswahl des Controllers sowie des Firmware Releases, kann das eigentliche Update mit einem Klick auf "Update" durchgeführt werden.
 
 ## Hardware
 
