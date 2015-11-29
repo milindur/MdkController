@@ -9,10 +9,6 @@
 /* Atmel library includes. */
 #include "asf.h"
 
-#include "trcUser.h"
-#include "trcConfig.h"
-#include "trcHardwarePort.h"
-
 #include <lib_aci.h>
 #include <aci_setup.h>
 #include "SEGGER_RTT.h"

@@ -563,9 +563,6 @@ del /f mdkcontroller.zip
     <Folder Include="src\FreeRTOS\" />
     <Folder Include="src\FreeRTOS\include\" />
     <Folder Include="src\FreeRTOS\portable\" />
-    <Folder Include="src\GenericRecorderLibSrc\" />
-    <Folder Include="src\GenericRecorderLibSrc\Configuration" />
-    <Folder Include="src\GenericRecorderLibSrc\Include\" />
     <Folder Include="src\linker_scripts" />
     <Folder Include="src\RTT\" />
   </ItemGroup>
@@ -1203,42 +1200,6 @@ del /f mdkcontroller.zip
     <Compile Include="src\FreeRTOS\timers.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Configuration\trcConfig.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Include\trcBase.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Include\trcHardwarePort.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Include\trcKernel.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Include\trcKernelHooks.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Include\trcTypes.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\Include\trcUser.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\trcBase.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\trcHardwarePort.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\trcKernel.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\trcKernelPortFreeRTOS.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\GenericRecorderLibSrc\trcUser.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="src\RTT\SEGGER_RTT.c">
       <SubType>compile</SubType>
     </Compile>
@@ -1330,9 +1291,6 @@ del /f mdkcontroller.zip
       <SubType>compile</SubType>
     </None>
     <None Include="src\FreeRTOS\readme.txt">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\GenericRecorderLibSrc\readme.txt">
       <SubType>compile</SubType>
     </None>
     <None Include="src\linker_scripts\flash.ld">

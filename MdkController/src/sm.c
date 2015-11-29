@@ -3,10 +3,6 @@
 
 #include "asf.h"
 
-#include "trcUser.h"
-#include "trcConfig.h"
-#include "trcHardwarePort.h"
-
 #include "segger_rtt.h"
 #include "eep.h"
 #include "sm.h"
@@ -162,10 +158,6 @@ void vSmInit(void)
 	NVIC_SetPriority(TC0_IRQn, 0);
 	NVIC_SetPriority(TC1_IRQn, 0);
 	NVIC_SetPriority(TC2_IRQn, 0);
-	
-	vTraceSetISRProperties(1, "TC0_Handler", 0);
-	vTraceSetISRProperties(2, "TC1_Handler", 0);
-	vTraceSetISRProperties(3, "TC2_Handler", 0);
 	
 	vSmReload();
 	
@@ -957,36 +949,24 @@ void prvSmIsrHandler(uint8_t motor)
 
 void TC0_Handler(void)
 {
-	vTraceStoreISRBegin(1);
-	
 	if ((tc_get_status(TC0, 0) & TC_SR_CPCS) == TC_SR_CPCS)
 	{
 		prvSmIsrHandler(0);
 	}
-	
-	vTraceStoreISREnd(0);
 }
 
 void TC1_Handler(void)
 {
-	vTraceStoreISRBegin(2);
-
 	if ((tc_get_status(TC0, 1) & TC_SR_CPCS) == TC_SR_CPCS)
 	{
 		prvSmIsrHandler(1);
 	}
-	
-	vTraceStoreISREnd(0);
 }
 
 void TC2_Handler(void)
 {
-	vTraceStoreISRBegin(3);
-
 	if ((tc_get_status(TC0, 2) & TC_SR_CPCS) == TC_SR_CPCS)
 	{
 		prvSmIsrHandler(2);
 	}
-	
-	vTraceStoreISREnd(0);
 }

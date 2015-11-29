@@ -34,10 +34,6 @@
 /* Atmel library includes. */
 #include "asf.h"
 
-#include "trcUser.h"
-#include "trcConfig.h"
-#include "trcHardwarePort.h"
-
 #include <SPI.h>
 #include "hal_platform.h"
 #include "hal_aci_tl.h"
@@ -453,8 +449,6 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
 	NVIC_SetPriority(PIOC_IRQn, 15);
 	NVIC_EnableIRQ(PIOC_IRQn);
 	
-	vTraceSetISRProperties(4, "BleIsrHdl", 15);
-
     ioport_set_pin_level(a_pins->reqn_pin, 0);
     delay_us(1);
     ioport_set_pin_level(a_pins->reqn_pin, 1);

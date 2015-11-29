@@ -9,10 +9,6 @@
 /* Atmel library includes. */
 #include "asf.h"
 
-#include "trcUser.h"
-#include "trcConfig.h"
-#include "trcHardwarePort.h"
-
 #include "SEGGER_RTT.h"
 #include "eep.h"
 #include "io.h"
@@ -45,12 +41,6 @@ int main(void)
 	SEGGER_RTT_printf(0, "Startup...\n");
 	
 	prvSetupHardware();
-	
-	vTraceInitTraceData();
-	/*if (!uiTraceStart())
-	{
-		SEGGER_RTT_printf(0, "Could not start recorder!\n");
-	}*/
 	
 	vEepInit();
 	vCamInit();
