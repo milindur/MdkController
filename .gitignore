@@ -2,3 +2,4 @@
 *.log
 Debug/
 Release/
+/.project
