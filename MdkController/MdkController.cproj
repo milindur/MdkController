@@ -225,7 +225,7 @@
     <com_atmel_avrdbg_tool_samice>
       <ToolOptions>
         <InterfaceProperties>
-          <JtagDbgClock>0</JtagDbgClock>
+          <JtagDbgClock>4000000</JtagDbgClock>
           <JtagEnableExtResetOnStartSession>true</JtagEnableExtResetOnStartSession>
           <JtagInChain>false</JtagInChain>
           <JtagDevicesBefore>0</JtagDevicesBefore>
@@ -236,15 +236,16 @@
           </JtagSelectedDeviceIndexInChain>
           <JtagDaisyChainDevices>
           </JtagDaisyChainDevices>
+          <SwdClock>12000000</SwdClock>
         </InterfaceProperties>
-        <InterfaceName>JTAG</InterfaceName>
+        <InterfaceName>SWD</InterfaceName>
         <JlinkConfigFile>D:\Dev\atmel_studio\MdkController\MdkController\jlink.config</JlinkConfigFile>
       </ToolOptions>
       <ToolType>com.atmel.avrdbg.tool.samice</ToolType>
       <ToolNumber>269303860</ToolNumber>
       <ToolName>J-Link</ToolName>
     </com_atmel_avrdbg_tool_samice>
-    <avrtoolinterface>JTAG</avrtoolinterface>
+    <avrtoolinterface>SWD</avrtoolinterface>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -567,6 +568,15 @@ del /f mdkcontroller.zip
     <Folder Include="src\RTT\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="src\config\SEGGER_RTT_Conf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\config\SEGGER_SYSVIEW_Conf.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\config\SEGGER_SYSVIEW_Config_FreeRTOS.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\mode_astro.c">
       <SubType>compile</SubType>
     </Compile>
@@ -585,7 +595,31 @@ del /f mdkcontroller.zip
     <Compile Include="src\mode_video.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\RTT\SEGGER_RTT_Syscalls_GCC.c">
+    <Compile Include="src\RTT\Global.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_RTT_printf.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_SYSVIEW.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_SYSVIEW.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_SYSVIEW_ConfDefaults.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_SYSVIEW_FreeRTOS.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_SYSVIEW_FreeRTOS.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\RTT\SEGGER_SYSVIEW_Int.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\version.c">
@@ -1204,12 +1238,6 @@ del /f mdkcontroller.zip
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\RTT\SEGGER_RTT.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\RTT\SEGGER_RTT_Conf.h">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="src\RTT\SEGGER_RTT_printf.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\services.h">

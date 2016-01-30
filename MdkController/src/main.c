@@ -9,7 +9,9 @@
 /* Atmel library includes. */
 #include "asf.h"
 
+#include "SEGGER_SYSVIEW.h"
 #include "SEGGER_RTT.h"
+
 #include "eep.h"
 #include "io.h"
 #include "cam.h"
@@ -41,6 +43,8 @@ int main(void)
 	SEGGER_RTT_printf(0, "Startup...\n");
 	
 	prvSetupHardware();
+
+    SEGGER_SYSVIEW_Conf();
 	
 	vEepInit();
 	vCamInit();
