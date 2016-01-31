@@ -159,9 +159,9 @@
 #if defined(__CC_ARM)
 #   define __always_inline   __forceinline
 #elif (defined __GNUC__)
-#	if defined(__always_inline)
-#		undef __always_inline
-#	endif
+#ifdef __always_inline
+#	undef __always_inline
+#endif
 #	define __always_inline   inline __attribute__((__always_inline__))
 #elif (defined __ICCARM__)
 #	define __always_inline   _Pragma("inline=forced")
