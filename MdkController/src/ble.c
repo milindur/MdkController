@@ -1044,7 +1044,7 @@ void prvAciEventHandlerTask(void *pvParameters)
 								{
 									vTaskDelay(50 / portTICK_RATE_MS);
 									
-									char * name = versionDEVICE_NAME_DEFAULT;
+									char * name = eep_params.ble_device_name;
 									lib_aci_set_local_data(&aci_state, PIPE_GAP_DEVICE_NAME_SET, (uint8_t *)name, strlen(name));
 									char * version = versionFIRMWARE_VERSION_STRING;
 									lib_aci_set_local_data(&aci_state, PIPE_DEVICE_INFORMATION_SOFTWARE_REVISION_STRING_SET, (uint8_t *)version, strlen(version));

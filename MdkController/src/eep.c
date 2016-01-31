@@ -2,6 +2,7 @@
 
 #include "asf.h"
 
+#include "version.h"
 #include "sm.h"
 #include "eep.h"
 
@@ -13,7 +14,7 @@
 const eep_params_t eep_params_def = {
 	.version = EEP_VERSION,
 	.check = EEP_CHECK,	
-	.ble_device_name = "MDK Pan/Tilt",
+	.ble_device_name = versionDEVICE_NAME_DEFAULT,
 	.sm[0] = {
 		.microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEALTH | SM_MODE_STEPS_DEFAULT,
 		.accel_steps = 10*SM_SPR,
@@ -88,7 +89,7 @@ void vEepSave(void)
 
 void vEepLoad(void)
 {
-	nvm_read(INT_FLASH, EEP_BASE_ADDRESS + 0, (void *)&eep_params, sizeof(eep_params_t));
+	//nvm_read(INT_FLASH, EEP_BASE_ADDRESS + 0, (void *)&eep_params, sizeof(eep_params_t));
 	//if (eep_params.version != EEP_VERSION || eep_params.check != EEP_CHECK)
 	{
 		vEepLoadDefault();
