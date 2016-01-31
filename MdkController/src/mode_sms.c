@@ -67,7 +67,6 @@ void vModeSmsInit(void)
 void vModeSmsUpdateIntervalToMinimum(void)
 {
     eep_params.mode_sms_interval = utilsMAX(eep_params.mode_sms_interval, ulModeSmsGetMinimumInterval(eep_params.mode_sms_pre_time, eep_params.mode_sms_focus_time, eep_params.mode_sms_exposure_time, eep_params.mode_sms_post_time));
-    vEepSave();
 }
 
 uint32_t ulModeSmsGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time)
@@ -172,7 +171,7 @@ void vModeSmsStart(void)
 
 			int32_t steps = eep_params.mode_sms_positions[1].pos[motor] - eep_params.mode_sms_positions[0].pos[motor];
 
-			int32_t img_count = (int32_t)eep_params.mode_sms_count;
+			//int32_t img_count = (int32_t)eep_params.mode_sms_count;
 			int32_t step_count = (int32_t)eep_params.mode_sms_count - 1;
 			int32_t ramp_count = (int32_t)eep_params.mode_sms_accel_count[motor] + (int32_t)eep_params.mode_sms_decel_count[motor];
 			int32_t lead_count = (int32_t)eep_params.mode_sms_leadin_count[motor] + (int32_t)eep_params.mode_sms_leadout_count[motor];

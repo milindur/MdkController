@@ -56,10 +56,6 @@ void vModeVideoSetStartEnd(int32_t start, int32_t end)
 {
     eep_params.mode_sms_positions[0].pos[0] = start;
     eep_params.mode_sms_positions[1].pos[0] = end;
-
-#if DEBUG
-    vEepSave();
-#endif
 }
 
 void vModeVideoGetStartEnd(int32_t *start, int32_t *end)
