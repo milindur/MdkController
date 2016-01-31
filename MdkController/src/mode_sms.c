@@ -23,7 +23,7 @@
 
 #define mode_smsCONTROL_TIMER_RATE      (10 / portTICK_RATE_MS)
 
-#define mode_smsCOUNT_SUM_TOO_HIGH()    ((eep_params.mode_sms_leadin_count[motor] + eep_params.mode_sms_accel_count[motor] + eep_params.mode_sms_decel_count[motor] + eep_params.mode_sms_leadout_count[motor]) > (eep_params.mode_sms_count - 1))
+#define mode_smsCOUNT_SUM_TOO_HIGH(motor)   ((eep_params.mode_sms_leadin_count[motor] + eep_params.mode_sms_accel_count[motor] + eep_params.mode_sms_decel_count[motor] + eep_params.mode_sms_leadout_count[motor]) > (eep_params.mode_sms_count - 1))
 
 static uint8_t state = MODE_SMS_STATE_STOP;
 static bool finished = false;
@@ -148,23 +148,23 @@ void vModeSmsStart(void)
 			
 			while (true)
 			{
-				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_leadin_count[motor] > 0)
+				if (mode_smsCOUNT_SUM_TOO_HIGH(motor) && eep_params.mode_sms_leadin_count[motor] > 0)
 				{
 					eep_params.mode_sms_leadin_count[motor]--;
 				}
-				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_leadout_count[motor] > 0)
+				if (mode_smsCOUNT_SUM_TOO_HIGH(motor) && eep_params.mode_sms_leadout_count[motor] > 0)
 				{
     				eep_params.mode_sms_leadout_count[motor]--;
 				}
-				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_accel_count[motor] > 1)
+				if (mode_smsCOUNT_SUM_TOO_HIGH(motor) && eep_params.mode_sms_accel_count[motor] > 1)
 				{
     				eep_params.mode_sms_accel_count[motor]--;
 				}
-				if (mode_smsCOUNT_SUM_TOO_HIGH() && eep_params.mode_sms_decel_count[motor] > 1)
+				if (mode_smsCOUNT_SUM_TOO_HIGH(motor) && eep_params.mode_sms_decel_count[motor] > 1)
 				{
     				eep_params.mode_sms_decel_count[motor]--;
 				}
-				if (!mode_smsCOUNT_SUM_TOO_HIGH())
+				if (!mode_smsCOUNT_SUM_TOO_HIGH(motor))
 				{
     				break;
 				}
