@@ -4,42 +4,42 @@
 #include <stdint.h>
 #include <math.h>
 
-#define SM_MODE_STEPS_1			1
-#define SM_MODE_STEPS_2			2
-#define SM_MODE_STEPS_4			4
-#define SM_MODE_STEPS_16		16
-#define SM_MODE_STEPS_MASK		0x1F
-#define SM_MODE_INTERPOLATION	0x40
-#define SM_MODE_STEALTH			0x80
+#define SM_MODE_STEPS_1         1
+#define SM_MODE_STEPS_2         2
+#define SM_MODE_STEPS_4         4
+#define SM_MODE_STEPS_16        16
+#define SM_MODE_STEPS_MASK      0x1F
+#define SM_MODE_INTERPOLATION   0x40
+#define SM_MODE_STEALTH         0x80
 
-#define SM_MODE_STEPS_DEFAULT	SM_MODE_STEPS_16
+#define SM_MODE_STEPS_DEFAULT   SM_MODE_STEPS_16
 
 #define SM_STEPS_DIVISOR    SM_MODE_STEPS_DEFAULT
 #define SM_FULL_SPR         200
 #define SM_SPR              (SM_FULL_SPR*SM_STEPS_DIVISOR)
 
-#define SM_RPS_TO_MRAD(r)	((uint32_t)(r)*2*M_PI*1000)
-#define SM_RPM_TO_MRAD(r)	((uint32_t)(r)*2*M_PI*1000/60)
+#define SM_RPS_TO_MRAD(r)   ((uint32_t)(r)*2*M_PI*1000)
+#define SM_RPM_TO_MRAD(r)   ((uint32_t)(r)*2*M_PI*1000/60)
 #define SM_STEPS_TO_MRAD(s) (2*M_PI*1000*(uint32_t)(s)/SM_SPR)
 #define SM_MRAD_TO_STEPS(p) ((uint32_t)(p)*SM_SPR/(2*M_PI*1000))
 
-#define SM_MAX_ACCEL_STEPS			(10*SM_SPR)
-#define SM_MAX_SPEED_STEPS			(6*SM_SPR)
-#define SM_MAX_STEALTH_SPEED_STEPS	(4*SM_SPR)
+#define SM_MAX_ACCEL_STEPS          (10*SM_SPR)
+#define SM_MAX_SPEED_STEPS          (6*SM_SPR)
+#define SM_MAX_STEALTH_SPEED_STEPS  (4*SM_SPR)
 
-#define SM_MOTORS_USED    3
+#define SM_MOTORS_USED      3
 
-#define SM_CW  1
-#define SM_CCW 0
+#define SM_CW               1
+#define SM_CCW              0
 
 #define SM_ASTRO_SIDEREAL   0
 #define SM_ASTRO_LUNAR      1
 
-#define SM_STATE_STOP		0
-#define SM_STATE_ACCEL		1
-#define SM_STATE_DECEL		2
-#define SM_STATE_RUN		3
-#define SM_STATE_CONT		4
+#define SM_STATE_STOP       0
+#define SM_STATE_ACCEL      1
+#define SM_STATE_DECEL      2
+#define SM_STATE_RUN        3
+#define SM_STATE_CONT       4
 #define SM_STATE_CONT_SLOW  5
 
 void vSmInit();

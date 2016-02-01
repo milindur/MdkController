@@ -11,18 +11,18 @@
 
 typedef struct
 {
-	uint32_t ulElapsedCycles;
-	uint32_t ulElapsedTime;
-	uint32_t ulElapsedIntervalTime;
-	uint32_t ulElapsedStepTime;
-	uint32_t ulStepTime;
+    uint32_t ulElapsedCycles;
+    uint32_t ulElapsedTime;
+    uint32_t ulElapsedIntervalTime;
+    uint32_t ulElapsedStepTime;
+    uint32_t ulStepTime;
 } BleModeSmsCycle_t;
 
 typedef struct
 {
-	uint32_t ulProgramCycles;
-	uint32_t ulProgramTime;
-	uint32_t ulProgramIntervalTime;
+    uint32_t ulProgramCycles;
+    uint32_t ulProgramTime;
+    uint32_t ulProgramIntervalTime;
 } BleModeSmsProgram_t;
 
 void vBleInit(void);

@@ -58,15 +58,15 @@ The outgoing command and the incoming event needs to be converted
     #define REVERSE_BITS(byte) (((reverse_lookup[(byte & 0x0F)]) << 4) + reverse_lookup[((byte & 0xF0) >> 4)])
     static const uint8_t reverse_lookup[] = { 0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15 };
 
-	/* Chip select. */
-	#define SPI_CHIP_SEL 0
-	#define SPI_CHIP_PCS spi_get_pcs(SPI_CHIP_SEL)
+    /* Chip select. */
+    #define SPI_CHIP_SEL 0
+    #define SPI_CHIP_PCS spi_get_pcs(SPI_CHIP_SEL)
 
-	/* Clock polarity. */
-	#define SPI_CLK_POLARITY 0
+    /* Clock polarity. */
+    #define SPI_CLK_POLARITY 0
 
-	/* Clock phase. */
-	#define SPI_CLK_PHASE 1
+    /* Clock phase. */
+    #define SPI_CLK_PHASE 1
 #endif
 
 static void m_aci_data_print(hal_aci_data_t *p_data);
@@ -86,7 +86,7 @@ static bool           aci_debug_print = false;
 aci_queue_t    aci_tx_q;
 aci_queue_t    aci_rx_q;
 
-static aci_pins_t	 *a_pins_local_ptr;
+static aci_pins_t    *a_pins_local_ptr;
 
 static xSemaphoreHandle xSemaphoreIsr;
 
@@ -96,10 +96,10 @@ void m_aci_data_print(hal_aci_data_t *p_data)
   uint8_t i;
   SEGGER_RTT_printf(0, "%02d: ", length);
   if (length <= 31) {
-	  for (i=0; i<=length; i++)
-	  {
-		SEGGER_RTT_printf(0, "%02x, ", p_data->buffer[i]);
-	  }
+      for (i=0; i<=length; i++)
+      {
+        SEGGER_RTT_printf(0, "%02x, ", p_data->buffer[i]);
+      }
   }
   SEGGER_RTT_printf(0, "\n");
 }
@@ -144,7 +144,7 @@ static void m_aci_isr(void)
     if (aci_queue_is_full_from_isr(&aci_rx_q))
     {
       //detachInterrupt(a_pins_local_ptr->interrupt_number);
-	  pio_disable_pin_interrupt(a_pins_local_ptr->rdyn_pin);
+      pio_disable_pin_interrupt(a_pins_local_ptr->rdyn_pin);
     }
   }
 
@@ -282,14 +282,14 @@ static bool m_aci_spi_transfer(hal_aci_data_t * data_to_send, hal_aci_data_t * r
 
 void hal_aci_tl_debug_print(bool enable)
 {
-	aci_debug_print = enable;
+    aci_debug_print = enable;
 }
 
 void hal_aci_tl_pin_reset(void)
 {
     if (PIN_UNUSED != a_pins_local_ptr->reset_pin)
     {
-		ioport_set_pin_dir(a_pins_local_ptr->reset_pin, IOPORT_DIR_OUTPUT);
+        ioport_set_pin_dir(a_pins_local_ptr->reset_pin, IOPORT_DIR_OUTPUT);
 
         if ((REDBEARLAB_SHIELD_V1_1     == a_pins_local_ptr->board_name) ||
             (REDBEARLAB_SHIELD_V2012_07 == a_pins_local_ptr->board_name))
@@ -339,18 +339,18 @@ bool hal_aci_tl_event_get(hal_aci_data_t *p_aci_data)
   {
     if (aci_debug_print)
     {
-	  taskENTER_CRITICAL();
+      taskENTER_CRITICAL();
       SEGGER_RTT_printf(0, "E");
       m_aci_data_print(p_aci_data);
-	  taskEXIT_CRITICAL();
+      taskEXIT_CRITICAL();
     }
 
     if (was_full && a_pins_local_ptr->interface_is_interrupt)
-	  {
+      {
       /* Enable RDY line interrupt again */
       //attachInterrupt(a_pins_local_ptr->interrupt_number, m_aci_isr, LOW);
-	  //pio_handler_set_pin(PIO_PC22_IDX, PIO_IT_LOW_LEVEL, m_aci_isr_hal);
-	  pio_enable_pin_interrupt(a_pins_local_ptr->rdyn_pin);
+      //pio_handler_set_pin(PIO_PC22_IDX, PIO_IT_LOW_LEVEL, m_aci_isr_hal);
+      pio_enable_pin_interrupt(a_pins_local_ptr->rdyn_pin);
     }
 
     /* Attempt to pull REQN LOW since we've made room for new messages */
@@ -383,20 +383,20 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   The SPI library assumes that the hardware pins are used
   */
   //SPI.begin();
-	spi_enable_clock(SPI0);
-	spi_disable(SPI0);
-	spi_reset(SPI0);
-	spi_set_lastxfer(SPI0);
-	spi_set_master_mode(SPI0);
-	spi_disable_mode_fault_detect(SPI0);
-	spi_set_peripheral_chip_select_value(SPI0, SPI_CHIP_PCS);
-	spi_configure_cs_behavior(SPI0, SPI_CHIP_SEL, SPI_CS_KEEP_LOW);
-	spi_set_clock_polarity(SPI0, SPI_CHIP_SEL, SPI_CLK_POLARITY);
-	spi_set_clock_phase(SPI0, SPI_CHIP_SEL, SPI_CLK_PHASE);
-	spi_set_bits_per_transfer(SPI0, SPI_CHIP_SEL, SPI_CSR_BITS_8_BIT);
-	spi_set_baudrate_div(SPI0, SPI_CHIP_SEL, (sysclk_get_cpu_hz() / 2625000));
-	spi_set_transfer_delay(SPI0, SPI_CHIP_SEL, 0, 1);
-	spi_enable(SPI0);
+    spi_enable_clock(SPI0);
+    spi_disable(SPI0);
+    spi_reset(SPI0);
+    spi_set_lastxfer(SPI0);
+    spi_set_master_mode(SPI0);
+    spi_disable_mode_fault_detect(SPI0);
+    spi_set_peripheral_chip_select_value(SPI0, SPI_CHIP_PCS);
+    spi_configure_cs_behavior(SPI0, SPI_CHIP_SEL, SPI_CS_KEEP_LOW);
+    spi_set_clock_polarity(SPI0, SPI_CHIP_SEL, SPI_CLK_POLARITY);
+    spi_set_clock_phase(SPI0, SPI_CHIP_SEL, SPI_CLK_PHASE);
+    spi_set_bits_per_transfer(SPI0, SPI_CHIP_SEL, SPI_CSR_BITS_8_BIT);
+    spi_set_baudrate_div(SPI0, SPI_CHIP_SEL, (sysclk_get_cpu_hz() / 2625000));
+    spi_set_transfer_delay(SPI0, SPI_CHIP_SEL, 0, 1);
+    spi_enable(SPI0);
   
   //Board dependent defines
   #if defined (__AVR__)
@@ -414,14 +414,14 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   aci_queue_init(&aci_rx_q);
 
   //Configure the IO lines
-  ioport_set_pin_mode(a_pins->rdyn_pin,		IOPORT_MODE_PULLUP);
-  ioport_set_pin_dir(a_pins->rdyn_pin,		IOPORT_DIR_INPUT);
-  ioport_set_pin_dir(a_pins->reqn_pin,		IOPORT_DIR_OUTPUT);
+  ioport_set_pin_mode(a_pins->rdyn_pin,     IOPORT_MODE_PULLUP);
+  ioport_set_pin_dir(a_pins->rdyn_pin,      IOPORT_DIR_INPUT);
+  ioport_set_pin_dir(a_pins->reqn_pin,      IOPORT_DIR_OUTPUT);
 
   if (PIN_UNUSED != a_pins->active_pin)
   {
-	ioport_set_pin_mode(a_pins->active_pin, 0);
-	ioport_set_pin_dir(a_pins->active_pin, IOPORT_DIR_INPUT);
+    ioport_set_pin_mode(a_pins->active_pin, 0);
+    ioport_set_pin_dir(a_pins->active_pin, IOPORT_DIR_INPUT);
   }
   /* Pin reset the nRF8001, required when the nRF8001 setup is being changed */
   hal_aci_tl_pin_reset();
@@ -438,17 +438,17 @@ void hal_aci_tl_init(aci_pins_t *a_pins, bool debug)
   if (a_pins->interface_is_interrupt)
   {
     // We use the LOW level of the RDYN line as the atmega328 can wakeup from sleep only on LOW
-	NVIC_DisableIRQ(PIOC_IRQn);
-	NVIC_ClearPendingIRQ(PIOC_IRQn);
+    NVIC_DisableIRQ(PIOC_IRQn);
+    NVIC_ClearPendingIRQ(PIOC_IRQn);
 
-	UNUSED(pio_get_interrupt_status(PIOC));
+    UNUSED(pio_get_interrupt_status(PIOC));
 
-	pio_handler_set_pin(a_pins->rdyn_pin, PIO_IT_FALL_EDGE, m_aci_isr_hal);
-	pio_enable_pin_interrupt(a_pins->rdyn_pin);
+    pio_handler_set_pin(a_pins->rdyn_pin, PIO_IT_FALL_EDGE, m_aci_isr_hal);
+    pio_enable_pin_interrupt(a_pins->rdyn_pin);
 
-	NVIC_SetPriority(PIOC_IRQn, 15);
-	NVIC_EnableIRQ(PIOC_IRQn);
-	
+    NVIC_SetPriority(PIOC_IRQn, 15);
+    NVIC_EnableIRQ(PIOC_IRQn);
+    
     ioport_set_pin_level(a_pins->reqn_pin, 0);
     delay_us(1);
     ioport_set_pin_level(a_pins->reqn_pin, 1);
@@ -476,10 +476,10 @@ bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
 
     if (aci_debug_print)
     {
-	  taskENTER_CRITICAL();
+      taskENTER_CRITICAL();
       SEGGER_RTT_printf(0, "C"); //ACI Command
       m_aci_data_print(p_aci_cmd);
-	  taskEXIT_CRITICAL();
+      taskEXIT_CRITICAL();
     }
   }
 
@@ -488,23 +488,23 @@ bool hal_aci_tl_send(hal_aci_data_t *p_aci_cmd)
 
 static uint8_t spi_readwrite(const uint8_t aci_byte)
 {
-	//Board dependent defines
+    //Board dependent defines
 #if defined (__AVR__)
     //For Arduino the transmission does not have to be reversed
     return SPI.transfer(aci_byte);
 #elif defined (__SAM3X8E__)
-	//For ARM the transmission has to be reversed
-	spi_write(SPI0, REVERSE_BITS(aci_byte), 0, 0);
-	while ((spi_read_status(SPI0) & SPI_SR_RDRF) == 0);
-	uint16_t data;
-	uint8_t pcs;
-	spi_read(SPI0, &data, &pcs);
-	return REVERSE_BITS((uint8_t)data);
+    //For ARM the transmission has to be reversed
+    spi_write(SPI0, REVERSE_BITS(aci_byte), 0, 0);
+    while ((spi_read_status(SPI0) & SPI_SR_RDRF) == 0);
+    uint16_t data;
+    uint8_t pcs;
+    spi_read(SPI0, &data, &pcs);
+    return REVERSE_BITS((uint8_t)data);
 #elif defined(__PIC32MX__)
     //For ChipKit the transmission has to be reversed
     uint8_t tmp_bits;
     tmp_bits = SPI.transfer(REVERSE_BITS(aci_byte));
-	return REVERSE_BITS(tmp_bits);
+    return REVERSE_BITS(tmp_bits);
 #endif
 }
 
@@ -535,31 +535,31 @@ void hal_aci_tl_q_flush (void)
 
 void m_aci_isr_hal(uint32_t id, uint32_t mask)
 {
-	//vTraceStoreISRBegin(4);
-	
-	if (ioport_get_pin_level(a_pins_local_ptr->rdyn_pin))
-	{
-		SEGGER_RTT_printf(0, "invalid irq\n");
-		return;
-	}
-	
-	//m_aci_isr();
-	portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
-	xSemaphoreGiveFromISR(xSemaphoreIsr, &xHigherPriorityTaskWoken);
-	
-	//vTraceStoreISREnd(1);
+    //vTraceStoreISRBegin(4);
+    
+    if (ioport_get_pin_level(a_pins_local_ptr->rdyn_pin))
+    {
+        SEGGER_RTT_printf(0, "invalid irq\n");
+        return;
+    }
+    
+    //m_aci_isr();
+    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(xSemaphoreIsr, &xHigherPriorityTaskWoken);
+    
+    //vTraceStoreISREnd(1);
 }
 
 void hal_aci_tl_isr_handler_task(void *pvParameters)
 {
-	UNUSED(pvParameters);
-	
-	xSemaphoreTake(xSemaphoreIsr, 0);
-	
-	for (;;)
-	{
-		xSemaphoreTake(xSemaphoreIsr, portMAX_DELAY);
-		
-		m_aci_isr();
-	}
+    UNUSED(pvParameters);
+    
+    xSemaphoreTake(xSemaphoreIsr, 0);
+    
+    for (;;)
+    {
+        xSemaphoreTake(xSemaphoreIsr, portMAX_DELAY);
+        
+        m_aci_isr();
+    }
 }

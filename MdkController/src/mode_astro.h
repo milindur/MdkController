@@ -15,14 +15,14 @@
 #define MODE_ASTRO_SPEED_SIDEREAL           0
 #define MODE_ASTRO_SPEED_LUNAR              1
 
-#define MODE_ASTRO_STATE_STOP				0
-#define MODE_ASTRO_STATE_WAKE_SM			1
-#define MODE_ASTRO_STATE_BACKLASH_1			2
-#define MODE_ASTRO_STATE_WAIT_BACKLASH_1	3
-#define MODE_ASTRO_STATE_BACKLASH_2			4
-#define MODE_ASTRO_STATE_WAIT_BACKLASH_2	5
-#define MODE_ASTRO_STATE_MOVE		        6
-#define MODE_ASTRO_STATE_WAIT_MOVE		    7
+#define MODE_ASTRO_STATE_STOP               0
+#define MODE_ASTRO_STATE_WAKE_SM            1
+#define MODE_ASTRO_STATE_BACKLASH_1         2
+#define MODE_ASTRO_STATE_WAIT_BACKLASH_1    3
+#define MODE_ASTRO_STATE_BACKLASH_2         4
+#define MODE_ASTRO_STATE_WAIT_BACKLASH_2    5
+#define MODE_ASTRO_STATE_MOVE               6
+#define MODE_ASTRO_STATE_WAIT_MOVE          7
 #define MODE_ASTRO_STATE_SLEEP_SM           8
 
 void vModeAstroInit(void);

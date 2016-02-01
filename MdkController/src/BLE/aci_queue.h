@@ -50,9 +50,9 @@
  */
 
 typedef struct {
-	hal_aci_data_t           aci_data[ACI_QUEUE_SIZE];
-	uint8_t                  head;
-	uint8_t                  tail;
+    hal_aci_data_t           aci_data[ACI_QUEUE_SIZE];
+    uint8_t                  head;
+    uint8_t                  tail;
 } aci_queue_t;
 
 void aci_queue_init(aci_queue_t *aci_q);

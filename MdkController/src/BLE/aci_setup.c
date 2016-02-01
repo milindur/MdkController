@@ -53,17 +53,17 @@ static bool aci_setup_fill(aci_state_t *aci_stat, uint8_t *num_cmd_offset)
   
   while (*num_cmd_offset < aci_stat->aci_setup_info.num_setup_msgs)
   {
-	//Board dependent defines
-	#if defined (__AVR__)
-		//For Arduino copy the setup ACI message from Flash to RAM.
-		memcpy_P(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
-				  pgm_read_byte_near(&(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]))+2); 
-	#elif defined(__PIC32MX__) || defined(__SAM3X8E__)
-		//In ChipKit we store the setup messages in RAM
-		//Add 2 bytes to the length byte for status byte, length for the total number of bytes
-		memcpy(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
-				  (aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]+2)); 
-	#endif
+    //Board dependent defines
+    #if defined (__AVR__)
+        //For Arduino copy the setup ACI message from Flash to RAM.
+        memcpy_P(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
+                  pgm_read_byte_near(&(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]))+2); 
+    #elif defined(__PIC32MX__) || defined(__SAM3X8E__)
+        //In ChipKit we store the setup messages in RAM
+        //Add 2 bytes to the length byte for status byte, length for the total number of bytes
+        memcpy(&msg_to_send, &(aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset]), 
+                  (aci_stat->aci_setup_info.setup_msgs[*num_cmd_offset].buffer[0]+2)); 
+    #endif
 
     //Put the Setup ACI message in the command queue
     if (!hal_aci_tl_send(&msg_to_send))
@@ -122,7 +122,7 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
      */
     if (i++ > 0xFFFFE)
     {
-      return SETUP_FAIL_TIMEOUT;	
+      return SETUP_FAIL_TIMEOUT;    
     }
     
     if (lib_aci_event_peek(aci_data))
@@ -132,7 +132,7 @@ uint8_t do_aci_setup(aci_state_t *aci_stat)
       if (ACI_EVT_CMD_RSP != aci_evt->evt_opcode)
       {
         //Receiving something other than a Command Response Event is an error.
-		return SETUP_FAIL_NOT_COMMAND_RESPONSE;
+        return SETUP_FAIL_NOT_COMMAND_RESPONSE;
       }
       
       cmd_status = (aci_status_code_t) aci_evt->params.cmd_rsp.cmd_status;
