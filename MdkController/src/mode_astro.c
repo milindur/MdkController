@@ -227,7 +227,7 @@ static void prvModeAstroControlCallback(void *pvParameters)
                 }
                 if (all_stoped)
                 {
-                    state = MODE_SMS_STATE_WAIT_PRE_TIME;
+                    state = MODE_ASTRO_STATE_SLEEP_SM;
                     SEGGER_RTT_printf(0, "ModeAstro Control State Change: WAIT_PRE_TIME\n");
                 }
             }

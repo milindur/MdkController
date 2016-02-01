@@ -256,7 +256,7 @@ static void prvModePanoControlCallback(void *pvParameters)
                     ucSmMove(motor, eep_params.mode_pano_position_start.pos[motor] - lSmGetPosition(motor));
                 }
             }
-            state = MODE_SMS_STATE_WAIT_START;
+            state = MODE_PANO_STATE_WAIT_START;
             SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_START\n");
             break;
         case MODE_PANO_STATE_WAIT_START:
@@ -270,7 +270,7 @@ static void prvModePanoControlCallback(void *pvParameters)
         case MODE_PANO_STATE_WAIT_PRE_TIME:
             if (step_timer >= eep_params.mode_sms_pre_time)
             {
-                state = MODE_SMS_STATE_WAIT_FOCUS_TIME;
+                state = MODE_PANO_STATE_WAIT_FOCUS_TIME;
                 SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_FOCUS_TIME\n");
                 step_timer = 0;
                 vCamFocus();
@@ -364,7 +364,7 @@ static void prvModePanoControlCallback(void *pvParameters)
                 }
                 if (all_stoped)
                 {
-                    state = MODE_SMS_STATE_WAIT_PRE_TIME;
+                    state = MODE_PANO_STATE_WAIT_PRE_TIME;
                     SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PRE_TIME\n");
                 }
             }
