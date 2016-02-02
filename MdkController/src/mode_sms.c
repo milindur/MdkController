@@ -338,7 +338,7 @@ uint32_t ulModeSmsGetRemainingIntervalTime(void)
     
     taskENTER_CRITICAL();
     {
-        if ((state >= MODE_SMS_STATE_WAIT_PRE_TIME) && (eep_params.mode_sms_interval >= interval_timer))
+        if ((state >= MODE_SMS_STATE_LOOP_BEGIN) && (eep_params.mode_sms_interval >= interval_timer))
         {
             v = eep_params.mode_sms_interval - interval_timer;
         }
@@ -387,7 +387,7 @@ void vModeSmsCalcTime(void)
 
 static void prvModeSmsControlCallback(void *pvParameters)
 {
-    if (state >= MODE_SMS_STATE_WAIT_PRE_TIME && state <= MODE_SMS_STATE_WAIT_INTERVAL)
+    if (state >= MODE_SMS_STATE_LOOP_BEGIN && state <= MODE_SMS_STATE_LOOP_END)
     {
         step_timer += 10;
         if (remaining_step_time > 0) remaining_step_time -= 10;
@@ -423,12 +423,79 @@ static void prvModeSmsControlCallback(void *pvParameters)
         case MODE_SMS_STATE_WAIT_START:
             if ((ucSmGetState(0) == SM_STATE_STOP) && (ucSmGetState(1) == SM_STATE_STOP) && (ucSmGetState(2) == SM_STATE_STOP))
             {
-                state = MODE_SMS_STATE_WAIT_PRE_TIME;
-                SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_PRE_TIME\n");
-                step_timer = 0;
-                remaining_step_time = eep_params.mode_sms_pre_time;
+                if (!eep_params.mode_sms_use_slider_as_shutter)
+                {
+                    state = MODE_SMS_STATE_WAIT_PRE_TIME;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_PRE_TIME\n");
+                    step_timer = 0;
+                    remaining_step_time = eep_params.mode_sms_pre_time;
+                }
+                else
+                {
+                    state = MODE_SMS_STATE_OPEN_SHUTTER;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: OPEN_SHUTTER\n");
+                }
                 interval_timer = 0;
             }                
+            break;
+        case MODE_SMS_STATE_OPEN_SHUTTER:
+            {
+                if (test_mode == mode_smsTEST_NONE)
+                {
+                    // calculate available time for mode_sms movement
+                    int32_t avail_move_time = eep_params.mode_sms_interval
+                        - (eep_params.mode_sms_pre_time
+                            + eep_params.mode_sms_post_time
+                            + eep_params.mode_sms_focus_time
+                            + eep_params.mode_sms_exposure_time);
+                
+                    // reduce used time on ~90% and divide by 4 (for acceleration and deceleration)
+                    avail_move_time = avail_move_time * 90 / 400;
+
+                    // sanity check
+                    if (avail_move_time < 100) avail_move_time = 100;
+
+                    int32_t steps = eep_params.mode_sms_positions[0].pos[0] - lSmGetPosition(0);
+                    
+                    if (eep_params.sm[0].power_save == 1) vSmEnable(0, 1);
+                    if (eep_params.mode_sms_optimize_accel)
+                    {
+                        // calculate optimal acceleration
+                        uint16_t accel = SM_STEPS_TO_MRAD(labs(steps)) * 1000000UL / (avail_move_time * avail_move_time);
+                        
+                        accel = utilsMIN(accel, SM_STEPS_TO_MRAD(eep_params.sm[0].accel_steps));
+                        accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/16));
+                        uint16_t max_speed = accel * avail_move_time / 1000;
+                        
+                        ucSmMoveEx(0, steps, max_speed, accel, accel);
+                    }
+                    else
+                    {
+                        ucSmMove(0, steps);
+                    }
+                    state = MODE_SMS_STATE_WAIT_OPEN_SHUTTER;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_OPEN_SHUTTER\n");
+                }
+                else
+                {
+                    state = MODE_SMS_STATE_WAIT_PRE_TIME;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_PRE_TIME\n");
+                    step_timer = 0;
+                    remaining_step_time = eep_params.mode_sms_pre_time;
+                }
+            }
+            break;
+        case MODE_SMS_STATE_WAIT_OPEN_SHUTTER:
+            {
+                if (ucSmGetState(0) == SM_STATE_STOP)
+                {
+                    if (eep_params.sm[0].power_save == 1) vSmEnable(0, 0);
+                    state = MODE_SMS_STATE_WAIT_PRE_TIME;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_PRE_TIME\n");
+                    step_timer = 0;
+                    remaining_step_time = eep_params.mode_sms_pre_time;
+                }
+            }
             break;
         case MODE_SMS_STATE_WAIT_PRE_TIME:
             if (step_timer >= eep_params.mode_sms_pre_time || test_mode == mode_smsTEST_EXPOSE_NOW)
@@ -496,8 +563,16 @@ static void prvModeSmsControlCallback(void *pvParameters)
                             + eep_params.mode_sms_focus_time 
                             + eep_params.mode_sms_exposure_time);
                 
-                    // reduce used time on ~90% and divide by 2 (for acceleration and deceleration)
-                    avail_move_time = avail_move_time * 90 / 200;
+                    if (!eep_params.mode_sms_use_slider_as_shutter)
+                    {
+                        // reduce used time on ~90% and divide by 2 (for acceleration and deceleration)
+                        avail_move_time = avail_move_time * 90 / 200;
+                    }
+                    else
+                    {
+                        // reduce used time on ~90% and divide by 4 (for acceleration and deceleration)
+                        avail_move_time = avail_move_time * 90 / 400;
+                    }
 
                     // sanity check
                     if (avail_move_time < 100) avail_move_time = 100;
@@ -505,43 +580,50 @@ static void prvModeSmsControlCallback(void *pvParameters)
                     for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                     {
                         int32_t steps = 0;
-                
-                        if (current_step < eep_params.mode_sms_leadin_count[motor] + 1)
+
+                        if (motor > 0 || !eep_params.mode_sms_use_slider_as_shutter)
                         {
-                            steps = 0;
-                        }                
-                        else if (current_step < eep_params.mode_sms_leadin_count[motor] + eep_params.mode_sms_accel_count[motor])
-                        {
-                            steps = accel_steps_x1000[motor] * ((int32_t)current_step - (int32_t)eep_params.mode_sms_leadin_count[motor]) / 1000L;
-                        }                
-                        else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_decel_count[motor] - eep_params.mode_sms_leadout_count[motor] + 1)
-                        {
-                            steps = run_steps[motor];
-                        }                
-                        else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_leadout_count[motor])
-                        {
-                            steps = decel_steps_x1000[motor] * ((int32_t)eep_params.mode_sms_count - (int32_t)eep_params.mode_sms_leadout_count[motor] - (int32_t)current_step) / 1000L;
-                        }
-                        else
-                        {
-                            steps = 0;
-                        }
-                
-                        // prevent the motor to move beyond the end position
-                        if (eep_params.mode_sms_positions[1].pos[motor] - eep_params.mode_sms_positions[0].pos[motor] >= 0)
-                        {
-                            if (lSmGetPosition(motor) + steps > eep_params.mode_sms_positions[1].pos[motor])
+                            if (current_step < eep_params.mode_sms_leadin_count[motor] + 1)
                             {
-                                steps = eep_params.mode_sms_positions[1].pos[motor] - lSmGetPosition(motor);
+                                steps = 0;
+                            }
+                            else if (current_step < eep_params.mode_sms_leadin_count[motor] + eep_params.mode_sms_accel_count[motor])
+                            {
+                                steps = accel_steps_x1000[motor] * ((int32_t)current_step - (int32_t)eep_params.mode_sms_leadin_count[motor]) / 1000L;
+                            }
+                            else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_decel_count[motor] - eep_params.mode_sms_leadout_count[motor] + 1)
+                            {
+                                steps = run_steps[motor];
+                            }
+                            else if (current_step < eep_params.mode_sms_count - eep_params.mode_sms_leadout_count[motor])
+                            {
+                                steps = decel_steps_x1000[motor] * ((int32_t)eep_params.mode_sms_count - (int32_t)eep_params.mode_sms_leadout_count[motor] - (int32_t)current_step) / 1000L;
+                            }
+                            else
+                            {
+                                steps = 0;
+                            }
+                        
+                            // prevent the motor to move beyond the end position
+                            if (eep_params.mode_sms_positions[1].pos[motor] - eep_params.mode_sms_positions[0].pos[motor] >= 0)
+                            {
+                                if (lSmGetPosition(motor) + steps > eep_params.mode_sms_positions[1].pos[motor])
+                                {
+                                    steps = eep_params.mode_sms_positions[1].pos[motor] - lSmGetPosition(motor);
+                                }
+                            }
+                            else
+                            {
+                                if (lSmGetPosition(motor) + steps < eep_params.mode_sms_positions[1].pos[motor])
+                                {
+                                    steps = eep_params.mode_sms_positions[1].pos[motor] - lSmGetPosition(motor);
+                                }
                             }
                         }
                         else
                         {
-                            if (lSmGetPosition(motor) + steps < eep_params.mode_sms_positions[1].pos[motor])
-                            {
-                                steps = eep_params.mode_sms_positions[1].pos[motor] - lSmGetPosition(motor);
-                            }
-                        }
+                            steps = eep_params.mode_sms_positions[1].pos[0] - lSmGetPosition(0);
+                        }                
                 
                         if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 1);
                         if (eep_params.mode_sms_optimize_accel)
@@ -596,10 +678,18 @@ static void prvModeSmsControlCallback(void *pvParameters)
                 {
                     eep_params.mode_sms_interval = interval_timer + 50;
                 }                    
-                state = MODE_SMS_STATE_WAIT_PRE_TIME;
-                SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_PRE_TIME\n");
-                step_timer = 0;
-                remaining_step_time = eep_params.mode_sms_pre_time;
+                if (!eep_params.mode_sms_use_slider_as_shutter)
+                {
+                    state = MODE_SMS_STATE_WAIT_PRE_TIME;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: WAIT_PRE_TIME\n");
+                    step_timer = 0;
+                    remaining_step_time = eep_params.mode_sms_pre_time;
+                }
+                else
+                {
+                    state = MODE_SMS_STATE_OPEN_SHUTTER;
+                    SEGGER_RTT_printf(0, "ModeSms Control State Change: OPEN_SHUTTER\n");
+                }
                 
                 interval_timer = 0;
                 current_loop++;

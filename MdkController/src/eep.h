@@ -32,6 +32,7 @@ typedef struct {
     uint32_t mode_sms_post_time;
     
     uint8_t mode_sms_optimize_accel;
+    uint8_t mode_sms_use_slider_as_shutter;
     
     uint32_t mode_sms_interval;
     uint32_t mode_sms_count;

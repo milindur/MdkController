@@ -18,19 +18,26 @@
 #define MODE_SMS_MAX_STALL_COUNT        300
 
 #define MODE_SMS_STATE_STOP                 0
+
 #define MODE_SMS_STATE_WAKE_SM              1
 #define MODE_SMS_STATE_GOTO_START           2
 #define MODE_SMS_STATE_WAIT_START           3
-#define MODE_SMS_STATE_WAIT_PRE_TIME        4
-#define MODE_SMS_STATE_WAIT_FOCUS_TIME      5
-#define MODE_SMS_STATE_WAIT_EXPOSURE_TIME   6
-#define MODE_SMS_STATE_WAIT_POST_TIME       7
-#define MODE_SMS_STATE_MOVE                 8
-#define MODE_SMS_STATE_WAIT_MOVE            9
-#define MODE_SMS_STATE_WAIT_INTERVAL        10
-#define MODE_SMS_STATE_GOTO_END             11
-#define MODE_SMS_STATE_WAIT_END             12
-#define MODE_SMS_STATE_SLEEP_SM             13
+
+#define MODE_SMS_STATE_LOOP_BEGIN           4
+#define MODE_SMS_STATE_OPEN_SHUTTER         4
+#define MODE_SMS_STATE_WAIT_OPEN_SHUTTER    5
+#define MODE_SMS_STATE_WAIT_PRE_TIME        6
+#define MODE_SMS_STATE_WAIT_FOCUS_TIME      7
+#define MODE_SMS_STATE_WAIT_EXPOSURE_TIME   8
+#define MODE_SMS_STATE_WAIT_POST_TIME       9
+#define MODE_SMS_STATE_MOVE                 10
+#define MODE_SMS_STATE_WAIT_MOVE            11
+#define MODE_SMS_STATE_WAIT_INTERVAL        12
+#define MODE_SMS_STATE_LOOP_END             12
+
+#define MODE_SMS_STATE_GOTO_END             13
+#define MODE_SMS_STATE_WAIT_END             14
+#define MODE_SMS_STATE_SLEEP_SM             15
 
 typedef struct {
     uint32_t pre_time;
