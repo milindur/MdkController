@@ -45,6 +45,9 @@ typedef struct {
     
     uint32_t mode_video_duration[SM_MOTORS_USED];
     uint8_t mode_video_ping_pong;
+
+    uint32_t mode_pano_pause;
+    uint32_t mode_pano_count;
     
     eep_mode_sms_position_params_t mode_pano_position_start;
     eep_mode_sms_position_params_t mode_pano_position_stop;

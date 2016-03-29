@@ -22,12 +22,14 @@
 static uint8_t state = MODE_PANO_STATE_STOP;
 static bool finished = false;
 static uint32_t current_step;
+static uint32_t current_loop;
 static uint32_t current_row;
 static uint32_t max_rows;
 static uint32_t current_col;
 static uint32_t max_cols;
 static int32_t steps[SM_MOTORS_USED];
 static uint32_t step_timer;
+static uint32_t pause_timer;
 static xTimerHandle xModePanoControlTimer;
 
 static void prvModePanoControlCallback(void *pvParameters);
@@ -98,9 +100,11 @@ void vModePanoStart(void)
         steps[2] = tilt_steps_per_row;
         
         current_step = 0;
+        current_loop = 0;
         current_row = 0;
         current_col = 0;
         step_timer = 0;
+        pause_timer = 0;
 
         state = MODE_PANO_STATE_WAKE_SM;
         xTimerStart(xModePanoControlTimer, 0);
@@ -126,7 +130,6 @@ void vModePanoStop(void)
     taskEXIT_CRITICAL();
 }
 
-
 bool bModePanoIsFinished(void)
 {
     bool v;
@@ -143,14 +146,14 @@ bool bModePanoIsFinished(void)
 
 bool bModePanoIsPaused(void)
 {
-    if (state == MODE_PANO_STATE_STOP) return false;
+    if (ucModePanoGetState() == MODE_PANO_STATE_STOP) return false;
     
     return xTimerIsTimerActive(xModePanoControlTimer) == pdFALSE;
 }
 
 bool bModePanoIsRunning(void)
 {
-    return state != MODE_PANO_STATE_STOP;
+    return ucModePanoGetState() != MODE_PANO_STATE_STOP;
 }
 
 uint32_t ulModePanoGetCurrentCycle(void)
@@ -168,20 +171,12 @@ uint32_t ulModePanoGetCurrentCycle(void)
 
 uint32_t ulModePanoGetRemainingCycles(void)
 {
-    uint32_t v;
-    
-    taskENTER_CRITICAL();
-    {
-        v = current_step;
-    }
-    taskEXIT_CRITICAL();
-    
-    return (max_rows + 1) * (max_cols + 1) - v;
+    return ulModePanoGetOverallCycles() - ulModePanoGetCurrentCycle();
 }
 
 uint32_t ulModePanoGetOverallCycles(void)
 {
-    return (max_rows + 1) * (max_cols + 1);
+    return (max_rows + 1) * (max_cols + 1) * eep_params.mode_pano_count;
 }
 
 uint32_t ulModePanoGetCurrentRow(void)
@@ -206,7 +201,7 @@ uint32_t ulModePanoGetOverallCols(void)
 
 uint8_t ucModePanoGetProgress(void)
 {
-    int16_t progress = 100 * current_step / ((max_rows + 1) * (max_cols + 1));
+    int16_t progress = 100 * ulModePanoGetCurrentCycle() / ulModePanoGetOverallCycles();
     if (progress > 100) progress = 100;
     if (progress < 0) progress = 0;
     return (uint8_t)progress;
@@ -225,12 +220,12 @@ uint8_t ucModePanoGetState(void)
     return v;
 }
 
-
 static void prvModePanoControlCallback(void *pvParameters)
 {
-    if (state >= MODE_PANO_STATE_WAIT_PRE_TIME && state <= MODE_PANO_STATE_WAIT_MOVE)
+    if (state >= MODE_PANO_STATE_WAIT_PRE_TIME && state <= MODE_PANO_STATE_WAIT_PAUSE)
     {
         step_timer += 10;
+        pause_timer += 10;
     }
 
     switch (state)
@@ -321,11 +316,27 @@ static void prvModePanoControlCallback(void *pvParameters)
                         current_row++;
                     }
                 }
-                
+
                 if (current_row > max_rows)
                 {
-                    state = MODE_PANO_STATE_SLEEP_SM;
-                    SEGGER_RTT_printf(0, "ModePano Control State Change: SLEEP_SM\n");
+                    current_loop++;
+                    if (current_loop >= eep_params.mode_pano_count)
+                    {
+                        state = MODE_PANO_STATE_SLEEP_SM;
+                        SEGGER_RTT_printf(0, "ModePano Control State Change: SLEEP_SM\n");
+                    }
+                    else
+                    {
+                        for (uint8_t motor = 1; motor <= 2; motor++)
+                        {
+                            ucSmMove(motor, eep_params.mode_pano_position_start.pos[motor] - lSmGetPosition(motor));
+                        }
+
+                        state = MODE_PANO_STATE_WAIT_PAUSE;
+                        SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PAUSE\n");
+
+                        pause_timer = 0;
+                    }
                 }
                 else
                 {
@@ -366,6 +377,24 @@ static void prvModePanoControlCallback(void *pvParameters)
                 {
                     state = MODE_PANO_STATE_WAIT_PRE_TIME;
                     SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PRE_TIME\n");
+                }
+            }
+            break;
+        case MODE_PANO_STATE_WAIT_PAUSE:
+            if (pause_timer >= eep_params.mode_pano_pause)
+            {
+                if ((ucSmGetState(0) == SM_STATE_STOP) && (ucSmGetState(1) == SM_STATE_STOP) && (ucSmGetState(2) == SM_STATE_STOP))
+                {
+                    if (pause_timer > eep_params.mode_pano_pause)
+                    {
+                        eep_params.mode_pano_pause = pause_timer + 50;
+                    }
+                    state = MODE_PANO_STATE_WAIT_PRE_TIME;
+                    SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PRE_TIME\n");
+					current_row = 0;
+					current_col = 0;
+                    step_timer = 0;             
+                    pause_timer = 0;
                 }
             }
             break;

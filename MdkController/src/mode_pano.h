@@ -19,7 +19,8 @@
 #define MODE_PANO_STATE_WAIT_POST_TIME      7
 #define MODE_PANO_STATE_MOVE                8
 #define MODE_PANO_STATE_WAIT_MOVE           9
-#define MODE_PANO_STATE_SLEEP_SM            10
+#define MODE_PANO_STATE_WAIT_PAUSE          10
+#define MODE_PANO_STATE_SLEEP_SM            11
 
 void vModePanoInit(void);
 void vModePanoStart(void);

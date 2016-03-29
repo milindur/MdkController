@@ -6,7 +6,7 @@
 #include "sm.h"
 #include "eep.h"
 
-#define EEP_VERSION 0x0113
+#define EEP_VERSION 0x0115
 #define EEP_CHECK   0xaa55
 
 #define EEP_BASE_ADDRESS 0x000FFC00
@@ -59,6 +59,8 @@ const eep_params_t eep_params_def = {
     },
     .mode_video_duration = { 10000, 10000, 10000 },
     .mode_video_ping_pong = 0,
+    .mode_pano_pause = 10000,
+    .mode_pano_count = 1,
     .mode_pano_position_start = {
         .pos = { 0, 0, 0 }
     },

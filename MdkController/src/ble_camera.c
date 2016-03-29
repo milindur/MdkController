@@ -60,7 +60,20 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 		{
 			uint16_t count = __builtin_bswap16(*(uint16_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Max Shots %d\n", count);
-			eep_params.mode_sms_count = count;
+			if (ucBleGetMode() == MOCO_MODE_SMS)
+			{
+				eep_params.mode_sms_count = count;
+			}
+			else if (ucBleGetMode() == MOCO_MODE_VIDEO_CONT)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_PANO)
+			{
+				eep_params.mode_pano_count = count;
+			}
+			else if (ucBleGetMode() == MOCO_MODE_ASTRO)
+			{
+			}
 			
 			vBleUpdateMoCoControlPointTxOk();
 			return true;
@@ -78,7 +91,20 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 		{
 			uint32_t interval = __builtin_bswap32(*(uint32_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Interval %d\n", interval);
-			eep_params.mode_sms_interval = interval;
+			if (ucBleGetMode() == MOCO_MODE_SMS)
+			{
+				eep_params.mode_sms_interval = interval;
+			}
+			else if (ucBleGetMode() == MOCO_MODE_VIDEO_CONT)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_PANO)
+			{
+				eep_params.mode_pano_pause = interval;
+			}
+			else if (ucBleGetMode() == MOCO_MODE_ASTRO)
+			{
+			}
 			
 			vBleUpdateMoCoControlPointTxOk();
 			return true;
@@ -166,7 +192,21 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 		case 0x6C:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Interval\n");
-			uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_interval);
+			uint32_t tmp = 0;
+			if (ucBleGetMode() == MOCO_MODE_SMS)
+			{
+				tmp = __builtin_bswap32(eep_params.mode_sms_interval);
+			}
+			else if (ucBleGetMode() == MOCO_MODE_VIDEO_CONT)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_PANO)
+			{
+				tmp = __builtin_bswap32(eep_params.mode_pano_pause);
+			}
+			else if (ucBleGetMode() == MOCO_MODE_ASTRO)
+			{
+			}
 			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
 			memcpy(&result[1], &tmp, 4);
 			bBleUpdateMoCoControlPointTxOkData(result, 5);
