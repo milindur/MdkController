@@ -38,7 +38,7 @@
 *                                                                    *
 **********************************************************************
 *                                                                    *
-*       SystemView version: V2.30                                    *
+*       SystemView version: V2.32b                                    *
 *                                                                    *
 **********************************************************************
 ----------------------------------------------------------------------
@@ -75,6 +75,12 @@ Purpose     : SEGGER SysView configuration.
   #elif ((defined (__ARM7M__) && (__CORE__ == __ARM7M__)) || (defined (__ARM7EM__) && (__CORE__ == __ARM7EM__)))
     #define SEGGER_SYSVIEW_CORE SEGGER_SYSVIEW_CORE_CM3
   #endif
+#elif defined(__CC_ARM)
+  #if (defined(__TARGET_ARCH_6S_M))
+    #define SEGGER_SYSVIEW_CORE SEGGER_SYSVIEW_CORE_CM0
+  #elif (defined(__TARGET_ARCH_7_M) || defined(__TARGET_ARCH_7E_M))
+    #define SEGGER_SYSVIEW_CORE SEGGER_SYSVIEW_CORE_CM3	
+  #endif
 #endif
 
 #ifndef   SEGGER_SYSVIEW_CORE
@@ -93,6 +99,10 @@ Purpose     : SEGGER SysView configuration.
 */
 #define SEGGER_SYSVIEW_RTT_BUFFER_SIZE      2048                                // Number of bytes that SysView uses for the buffer.
 #define SEGGER_SYSVIEW_RTT_CHANNEL          1                                   // The RTT channel that SysView will use. 0: Auto selection
+
+#define SEGGER_SYSVIEW_USE_STATIC_BUFFER    1                                   // Use a static buffer to generate events instead of a buffer on the stack
+
+#define SEGGER_SYSVIEW_POST_MORTEM_MODE     0                                   // 1: Enable post mortem analysis mode
 
 /*********************************************************************
 *
