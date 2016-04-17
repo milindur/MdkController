@@ -42,8 +42,17 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 				}
 				else
 				{
-					SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start SMS\n");
-					vModeSmsStart();
+					if (data_length == 1)
+					{
+						uint8_t option = data[0];
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start SMS with Option %d\n", option);
+						vModeSmsStart(option);
+					}
+					else
+					{
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start SMS\n");
+						vModeSmsStart(MODE_SMS_OPTION_NONE);
+					}
 				}
 			}
 			else if (ucBleGetMode() == MOCO_MODE_VIDEO_CONT)

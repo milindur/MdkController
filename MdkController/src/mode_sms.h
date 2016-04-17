@@ -39,6 +39,9 @@
 #define MODE_SMS_STATE_WAIT_END             14
 #define MODE_SMS_STATE_SLEEP_SM             15
 
+#define MODE_SMS_OPTION_NONE				0
+#define MODE_SMS_OPTION_SHUTTER				1
+
 typedef struct {
     uint32_t pre_time;
     uint32_t focus_time;
@@ -49,7 +52,7 @@ typedef struct {
 void vModeSmsInit(void);
 void vModeSmsUpdateIntervalToMinimum(void);
 uint32_t ulModeSmsGetMinimumInterval(uint32_t pre_time, uint32_t focus_time, uint32_t exposure_time, uint32_t post_time);
-void vModeSmsStart(void);
+void vModeSmsStart(uint8_t option);
 void vModeSmsStartCameraTest(void);
 void vModeSmsStartExposeNow(void);
 void vModeSmsPause(void);

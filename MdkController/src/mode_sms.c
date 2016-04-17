@@ -128,12 +128,18 @@ void vModeSmsStartCameraTest(void)
     taskEXIT_CRITICAL();
 }
 
-void vModeSmsStart(void)
+void vModeSmsStart(uint8_t option)
 {
     if (state != MODE_SMS_STATE_STOP) return;
     
     taskENTER_CRITICAL();
     {
+		eep_params.mode_sms_use_slider_as_shutter = 0;
+		if (option & MODE_SMS_OPTION_SHUTTER)
+		{
+			eep_params.mode_sms_use_slider_as_shutter = 1;
+		}
+
         for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
         {
             if (eep_params.mode_sms_accel_count[motor] == 0)
