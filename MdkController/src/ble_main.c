@@ -275,12 +275,23 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 		}
 		case 0x1D:
 		{
-			SEGGER_RTT_printf(0, "MoCoBus Control RX: Swap Program Start/End Points\n");
-			
+			uint8_t motor_mask = 0xff;
+			if (data_length == 1)
+			{
+				motor_mask = data[0];
+				SEGGER_RTT_printf(0, "MoCoBus Control RX: Swap Program Start/End Points with Mask %x\n", motor_mask);
+			}
+			else
+			{
+				SEGGER_RTT_printf(0, "MoCoBus Control RX: Swap Program Start/End Points\n");
+			}
+
 			if (ucBleGetMode() == MOCO_MODE_SMS || ucBleGetMode() == MOCO_MODE_VIDEO_CONT)
 			{
 				for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 				{
+					if (((1 << motor) & motor_mask) == 0) continue;
+
 					vUtilsSwap(&eep_params.mode_sms_positions[0].pos[motor], &eep_params.mode_sms_positions[1].pos[motor]);
 				}
 			}
