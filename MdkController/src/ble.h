@@ -26,5 +26,18 @@ typedef struct
 } BleModeSmsProgram_t;
 
 void vBleInit(void);
+bool bBleUpdateMoCoControlPointTx(uint8_t state, uint8_t * buffer, uint8_t length);
+bool bBleProcessMoCoControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length);
+bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length);
+bool bBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length);
+bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length);
+bool bBleUpdateMoCoControlPointTxOkData(uint8_t * data, uint8_t length);
+void vBleUpdateMoCoControlPointTxOk(void);
+void vBleUpdateMoCoControlPointTxError(void);
+void vBleSetJoystickWatchdog(uint8_t enable);
+uint8_t ucBleGetJoystickWatchdog(void);
+void vBleJoystickTriggerReset(void);
+uint8_t ucBleGetMode(void);
+void vBleSetMode(uint8_t value);
 
 #endif /* BLE_H_ */

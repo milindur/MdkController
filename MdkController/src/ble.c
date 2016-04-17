@@ -24,20 +24,7 @@
 #include "cam.h"
 #include "io.h"
 #include "utils.h"
-
-#define MOCO_VALUE_BYTE     0
-#define MOCO_VALUE_UINT     1
-#define MOCO_VALUE_INT      2
-#define MOCO_VALUE_LONG     3
-#define MOCO_VALUE_ULONG    4
-#define MOCO_VALUE_FLOAT    5
-#define MOCO_VALUE_STRING   6
-
-#define MOCO_MODE_SMS           0
-#define MOCO_MODE_TL_CONT       1
-#define MOCO_MODE_VIDEO_CONT    2
-#define MOCO_MODE_PANO          100
-#define MOCO_MODE_ASTRO         101
+#include "moco.h"
 
 #define bleJOYSTICK_WATCHDOG_TIMER_RATE     (1000 / portTICK_RATE_MS)
 
@@ -53,22 +40,12 @@ static uint8_t mode = MOCO_MODE_SMS;
 #endif
 
 static const hal_aci_data_t setup_msgs[NB_SETUP_MESSAGES] = SETUP_MESSAGES_CONTENT;
-
 static aci_state_t aci_state;
-
 static bool radio_ack_pending  = false;
 static bool timing_change_done = false;
 
-static bool prbBleUpdateMoCoControlPointTx(uint8_t state, uint8_t * buffer, uint8_t length);
-static bool prbBleProcessMoCoControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length);
-static bool prbBleUpdateMoCoControlPointTxOkData(uint8_t * data, uint8_t length);
-static void prvBleUpdateMoCoControlPointTxOk(void);
-static void prvBleUpdateMoCoControlPointTxError(void);
-static void prvAciEventHandlerTask(void *pvParameters);
 static void prvJoystickWatchdogTimerCallback(void *pvParameters);
+static void prvAciEventHandlerTask(void *pvParameters);
 
 void vBleInit(void)
 {
@@ -111,7 +88,32 @@ void vBleInit(void)
     xTimerStart(xJoystickWatchdogTimer, 0); 
 }
 
-bool prbBleUpdateMoCoControlPointTx(uint8_t state, uint8_t * data, uint8_t length)
+inline uint8_t ucBleGetMode(void)
+{
+	return mode;
+}
+
+inline void vBleSetMode(uint8_t value)
+{
+	mode = value;
+}
+
+inline void vBleJoystickTriggerReset(void)
+{
+	joystick_wdg_trigger = 0;
+}
+
+inline void vBleSetJoystickWatchdog(uint8_t enable)
+{
+	joystick_wdg_enabled = enable;
+}
+
+inline uint8_t ucBleGetJoystickWatchdog(void)
+{
+	return joystick_wdg_enabled;
+}
+
+bool bBleUpdateMoCoControlPointTx(uint8_t state, uint8_t * data, uint8_t length)
 {
     uint8_t result[] = { 0, 0, 0, 0, 0, 0xff, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     
@@ -136,871 +138,37 @@ bool prbBleUpdateMoCoControlPointTx(uint8_t state, uint8_t * data, uint8_t lengt
     return false;
 }
 
-bool prbBleUpdateMoCoControlPointTxOkData(uint8_t * data, uint8_t length)
+inline bool bBleUpdateMoCoControlPointTxOkData(uint8_t * data, uint8_t length)
 {
-    return prbBleUpdateMoCoControlPointTx(1, data, length);
+    return bBleUpdateMoCoControlPointTx(1, data, length);
 }
 
-void prvBleUpdateMoCoControlPointTxOk(void)
+inline void vBleUpdateMoCoControlPointTxOk(void)
 {
-    prbBleUpdateMoCoControlPointTx(1, NULL, 0);
+    bBleUpdateMoCoControlPointTx(1, NULL, 0);
 }
 
-void prvBleUpdateMoCoControlPointTxError(void)
+inline void vBleUpdateMoCoControlPointTxError(void)
 {
-    prbBleUpdateMoCoControlPointTx(0, NULL, 0);
+    bBleUpdateMoCoControlPointTx(0, NULL, 0);
 }
 
-bool prbBleProcessMoCoControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length)
+bool bBleProcessMoCoControlPointRx(uint8_t subadr, uint8_t cmd, uint8_t * data, uint8_t data_length)
 {
     SEGGER_RTT_printf(0, "MoCoBus Control RX: Adr %02x Cmd %02x\n", subadr, cmd);
         
     switch (subadr)
     {
     case 0x00:
-        return prbBleProcessMoCoControlPointRxMain(cmd, data, data_length);
+        return bBleProcessMoCoControlPointRxMain(cmd, data, data_length);
     case 0x01:
     case 0x02:
     case 0x03:
-        return prbBleProcessMoCoControlPointRxMotor(subadr - 1, cmd, data, data_length);
+        return bBleProcessMoCoControlPointRxMotor(subadr - 1, cmd, data, data_length);
     case 0x04:
-        return prbBleProcessMoCoControlPointRxCamera(cmd, data, data_length);
+        return bBleProcessMoCoControlPointRxCamera(cmd, data, data_length);
     }       
     
-    return false;
-}
-
-bool prbBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data_length)
-{
-    switch (cmd)
-    {
-    case 0x02:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program\n");
-            if (mode == MOCO_MODE_SMS)
-            {
-                if (bModeSmsIsPaused())
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume SMS\n");
-                    vModeSmsResume();
-                }
-                else
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start SMS\n");
-                    vModeSmsStart();
-                }
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                if (bModeVideoIsPaused())
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume Video\n");
-                    vModeVideoResume();
-                }
-                else
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Video\n");
-                    vModeVideoStart();
-                }
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                if (bModePanoIsPaused())
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume Pano\n");
-                    vModePanoResume();
-                }
-                else
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Pano\n");
-                    vModePanoStart();
-                }
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-                if (bModeAstroIsPaused())
-                {
-                    SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Resume Astro\n");
-                    vModeAstroResume();
-                }
-                else
-                {
-                    if (data_length == 2)
-                    {
-                        uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
-                        uint8_t spd = data[1] == 0 ? MODE_ASTRO_SPEED_SIDEREAL : MODE_ASTRO_SPEED_LUNAR;
-                        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %d\n", dir, spd);
-                        vModeAstroStart(dir, spd);
-                    }
-                    else if (data_length == 1)
-                    {
-                        uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
-                        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d\n", dir);
-                        vModeAstroStart(dir, MODE_ASTRO_SPEED_SIDEREAL);
-                    }
-                    else
-                    {
-                        SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro\n");
-                        vModeAstroStart(MODE_ASTRO_DIR_NORTH, MODE_ASTRO_SPEED_SIDEREAL);
-                    }
-                }
-            }
-                                    
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x03:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Pause Program\n");
-            if (mode == MOCO_MODE_SMS)
-            {
-                vModeSmsPause();
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                vModeVideoPause();
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                vModePanoPause();
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-                vModeAstroPause();
-            }
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x04:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Stop Program\n");
-            if (mode == MOCO_MODE_SMS)
-            {
-                vModeSmsStop();
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                vModeVideoStop();
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                vModePanoStop();
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-                vModeAstroStop();
-            }
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x0A:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Move Home\n");
-            for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
-            {
-                if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
-                if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
-                ucSmMove(motor, -lSmGetPosition(motor));
-            }
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x0E:
-        {
-            uint8_t enable = data[0];
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Joystick Watchdog %d\n", enable);
-            joystick_wdg_enabled = enable;
-            joystick_wdg_trigger = 0;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x16:
-        {
-            if (!(bModeSmsIsPaused() || bModeVideoIsPaused() || bModePanoIsPaused() || bModeAstroIsPaused()
-                || bModeSmsIsRunning() || bModeVideoIsRunning() || bModePanoIsRunning() || bModeAstroIsRunning()))
-            {
-                mode = data[0];
-            }
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Mode %d\n", mode);
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x18:
-        {
-            uint8_t ping_pong = data[0];
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Ping-Pong Flag %d\n", ping_pong);
-            eep_params.mode_video_ping_pong = ping_pong;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x19:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Move Start Point\n");
-            for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
-            {
-                if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
-                if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
-                int32_t steps = 0;
-                if (mode == MOCO_MODE_SMS || mode == MOCO_MODE_VIDEO_CONT)
-                {
-                    steps = eep_params.mode_sms_positions[0].pos[motor] - lSmGetPosition(motor);
-                }
-                else if (mode == MOCO_MODE_PANO)
-                {
-                    steps = eep_params.mode_pano_position_start.pos[motor] - lSmGetPosition(motor);
-                }
-                ucSmMove(motor, steps);
-            }
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x1A:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Start Point\n");
-            for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
-            {
-                eep_params.mode_sms_positions[0].pos[motor] = lSmGetPosition(motor);
-                eep_params.mode_pano_position_stop.pos[motor] = lSmGetPosition(motor);
-                SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Start Point %d: %d\n", motor, lSmGetPosition(motor));
-            }
-            
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x1B:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program End Point\n");
-            for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
-            {
-                eep_params.mode_sms_positions[1].pos[motor] = lSmGetPosition(motor);
-                eep_params.mode_pano_position_start.pos[motor] = lSmGetPosition(motor);
-                SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program End Point %d: %d\n", motor, lSmGetPosition(motor));
-            }
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x1D:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Swap Program Start/End Points\n");
-            
-            if (mode == MOCO_MODE_SMS || mode == MOCO_MODE_VIDEO_CONT)
-            {
-                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
-                {
-                    vUtilsSwap(&eep_params.mode_sms_positions[0].pos[motor], &eep_params.mode_sms_positions[1].pos[motor]);
-                }
-            }
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x32:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Graffik Mode\n");
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x33:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Set App Mode\n");
-            return true;
-        }
-    case 0x64:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Firmware Version\n");
-            uint32_t tmp = __builtin_bswap32(versionFIRMWARE_VERSION);
-            uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x65:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Run Status\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            if (bModeSmsIsPaused() || bModeVideoIsPaused() || bModePanoIsPaused() || bModeAstroIsPaused())
-            {
-                result[1] = 1;
-            }
-            else if (bModeSmsIsRunning() || bModeVideoIsRunning() || bModePanoIsRunning() || bModeAstroIsRunning())
-            {
-                result[1] = 2;
-            }
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x66:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Run Time\n");
-            uint32_t tmp = 0;
-            if (mode == MOCO_MODE_SMS)
-            {
-                tmp = __builtin_bswap32(ulModeSmsGetCurrentTime());
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                tmp = __builtin_bswap32(ulModeVideoGetCurrentTime());
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-            }
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x76:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get SMS / Continuous Program Mode\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, mode };
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x7A:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Joystick Watchdog Mode Status\n");
-            joystick_wdg_trigger = 0;
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            result[1] = joystick_wdg_enabled;
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x7B:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Program %% Complete\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            if (mode == MOCO_MODE_SMS)
-            {
-                result[1] = ucModeSmsGetProgress();
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                result[1] = ucModeVideoGetProgress();
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                result[1] = ucModePanoGetProgress();
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-            }
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x7D:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Total Program Run Time\n");
-            uint32_t tmp = 0;
-            if (mode == MOCO_MODE_SMS)
-            {
-                tmp = __builtin_bswap32(ulModeSmsGetOverallTime());
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                tmp = __builtin_bswap32(ulModeVideoGetOverallTime());
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                //tmp = __builtin_bswap32(ulModePanoGetOverallTime());
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-            }
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x7E:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Program Complete?\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            if (bModeSmsIsFinished() || bModeVideoIsFinished() || bModePanoIsFinished() || bModeAstroIsFinished())
-            {
-                result[1] = 1;
-            }
-            else
-            {
-                result[1] = 0;
-            }
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    }
-
-    prvBleUpdateMoCoControlPointTxOk();
-    return false;
-}
-
-bool prbBleProcessMoCoControlPointRxMotor(uint8_t motor, uint8_t cmd, uint8_t * data, uint8_t data_length)
-{
-    switch (cmd)
-    {
-    case 0x02:
-        {
-            uint8_t power_save = data[0];
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Motor Sleep %d\n", motor, power_save);
-            eep_params.sm[motor].power_save = power_save == 1 ? 1 : 2;
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x03:
-        {
-            uint8_t enable = data[0];
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Motor Enable %d\n", motor, enable);
-            if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, enable);
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x04:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Stop\n", motor);
-            vSmStop(motor);
-            
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x06:
-        {
-            uint8_t microsteps = data[0];
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Microstep Value\n", motor);
-            if (microsteps == 4)
-            {
-                eep_params.sm[motor].microstep_mode = SM_MODE_STEALTH | SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
-            }
-            else //if (microsteps == 8)
-            {
-                eep_params.sm[motor].microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEPS_DEFAULT;
-            }
-            /*else
-            {
-                eep_params.sm[motor].microstep_mode = SM_MODE_STEPS_DEFAULT;
-            }*/
-            vSmSetMicrostepMode(motor, eep_params.sm[motor].microstep_mode);
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x0D:
-        {
-            uint32_t tmp;
-            memcpy(&tmp, data, 4);
-            tmp = __builtin_bswap32(tmp);
-            float fspeed;
-            memcpy(&fspeed, &tmp, 4);
-            int32_t speed = (int32_t) fspeed;
-
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Move Continuous %d\n", motor, speed);
-            
-            int32_t max_speed = lSmGetMaxSpeed(motor);
-            
-            joystick_wdg_trigger = 0;
-            if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
-            if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
-            if (speed >= 0)
-            {
-                bSmMoveContinuous(motor, (int32_t) SM_STEPS_TO_MRAD(labs(speed)) * max_speed / (int32_t) SM_STEPS_TO_MRAD(5000));
-            }
-            else
-            {
-                bSmMoveContinuous(motor, -1 * (int32_t) SM_STEPS_TO_MRAD(labs(speed)) * max_speed / (int32_t) SM_STEPS_TO_MRAD(5000));
-            }
-            
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x13:
-        {
-            uint32_t lead_in = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Lead-In Shots / Time %d\n", motor, lead_in);
-            eep_params.mode_sms_leadin_count[motor] = lead_in;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x14:
-        {
-            uint32_t travel = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Travel Shots (SMS) / Time (Cont.) %d\n", motor, travel);
-            if (travel != 0) eep_params.mode_video_duration[motor] = travel;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x15:
-        {
-            uint32_t accel = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Accel Shots / Time %d\n", motor, accel);
-            eep_params.mode_sms_accel_count[motor] = accel;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x16:
-        {
-            uint32_t decel = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Decel Shots / Time %d\n", motor, decel);
-            eep_params.mode_sms_decel_count[motor] = decel;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x19:
-        {
-            uint32_t lead_out = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Lead-Out Shots / Time %d\n", motor, lead_out);
-            eep_params.mode_sms_leadout_count[motor] = lead_out;
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x1B:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Reset Limits and Program Start/Stop Positions\n", motor);
-            
-            vSmResetPosition(motor);
-            eep_params.mode_sms_positions[0].pos[motor] = 0;
-            eep_params.mode_sms_positions[1].pos[motor] = 0;
-            eep_params.mode_pano_position_start.pos[motor] = 0;
-            eep_params.mode_pano_position_stop.pos[motor] = 0;
-            eep_params.mode_pano_position_ref_start.pos[motor] = 0;
-            eep_params.mode_pano_position_ref_stop.pos[motor] = 0;
-            eep_params.mode_video_duration[motor] = 0;
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x1C:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Auto Set Program Microsteps\n", motor);
-            uint8_t result[] = { MOCO_VALUE_BYTE, 16 };
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x1D:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Start Here\n", motor);
-            eep_params.mode_pano_position_ref_start.pos[motor] = lSmGetPosition(motor);
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x1E:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Set Stop Here\n", motor);
-            eep_params.mode_pano_position_ref_stop.pos[motor] = lSmGetPosition(motor);
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x66:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Microstep Value\n", motor);
-            uint8_t stealth = eep_params.sm[motor].microstep_mode & SM_MODE_STEALTH;
-            uint8_t interpolation = eep_params.sm[motor].microstep_mode & SM_MODE_INTERPOLATION;
-            
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            if (stealth)
-            {
-                result[1] = 4;
-            }
-            else if (interpolation)
-            {
-                result[1] = 8;
-            }
-            else
-            {
-                result[1] = 16;
-            }
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x6B:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Motor Running\n", motor);
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            result[1] = ucSmGetState(motor) != SM_STATE_STOP ? 1 : 0;
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x6F:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Program Start Point\n", motor);
-            int32_t tmp = __builtin_bswap32(eep_params.mode_sms_positions[0].pos[motor]);
-            uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x70:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Program Stop Point\n", motor);
-            int32_t tmp = __builtin_bswap32(eep_params.mode_sms_positions[1].pos[motor]);
-            uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x71:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Travel Shots (SMS) / Time (Cont.)\n", motor);
-            uint32_t tmp = 0;
-            if (mode == MOCO_MODE_SMS)
-            {
-                tmp = __builtin_bswap32(eep_params.mode_video_duration[motor]);
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-                tmp = __builtin_bswap32(eep_params.mode_video_duration[motor]);
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                if (motor == 1) tmp = __builtin_bswap32(ulModePanoGetOverallCols());
-                if (motor == 2) tmp = __builtin_bswap32(ulModePanoGetOverallRows());
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-            }
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x72:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Lead-In Shots / Time\n", motor);
-            uint32_t tmp = eep_params.mode_sms_leadin_count[motor];
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x73:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Accel Shots / Time\n", motor);
-            uint32_t tmp = eep_params.mode_sms_accel_count[motor];
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x74:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Decel Shots / Time\n", motor);
-            uint32_t tmp = eep_params.mode_sms_decel_count[motor];
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x75:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Check Motor Sleep State\n", motor);
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            result[1] = eep_params.sm[motor].power_save == 1 ? 1 : 0;
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x77:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: [MOTOR%d] Get Lead-Out Shots / Time\n", motor);
-            uint32_t tmp = eep_params.mode_sms_leadout_count[motor];
-            uint8_t result[] = { MOCO_VALUE_ULONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    }
-
-    prvBleUpdateMoCoControlPointTxOk();
-    return false;
-}
-
-bool prbBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t data_length)
-{
-    switch (cmd)
-    {
-    case 0x03:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Expose Now\n");
-            vModeSmsStartExposeNow();
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x04:
-        {
-            uint32_t trigger_time = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Trigger Time %d\n", trigger_time);
-            eep_params.mode_sms_exposure_time = trigger_time;
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x05:
-        {
-            uint16_t focus_time = __builtin_bswap16(*(uint16_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Focus Time %d\n", focus_time);
-            eep_params.mode_sms_focus_time = focus_time;
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x06:
-        {
-            uint16_t count = __builtin_bswap16(*(uint16_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Max Shots %d\n", count);
-            eep_params.mode_sms_count = count;
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x07:
-        {
-            uint16_t exposure_delay_time = __builtin_bswap16(*(uint16_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Exposure Delay %d\n", exposure_delay_time);
-            eep_params.mode_sms_post_time = exposure_delay_time;
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x0A:
-        {
-            uint32_t interval = __builtin_bswap32(*(uint32_t *)data);
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Interval %d\n", interval);
-            eep_params.mode_sms_interval = interval;
-                        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x0B:
-        {
-            uint8_t enable = data[0];
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Camera Test Mode\n");
-            if (enable)
-            {
-                vModeSmsStartCameraTest();
-            }
-            else
-            {
-                vModeSmsStop();             
-            }
-        
-            prvBleUpdateMoCoControlPointTxOk();
-            return true;
-        }
-    case 0x64:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Camera Enable\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, 1 };
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x65:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Exposing now?\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    case 0x66:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Trigger Time\n");
-            uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_exposure_time);
-            uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x67:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Focus Time\n");
-            uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_focus_time);
-            uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
-            memcpy(&result[1], &tmp, 2);
-            prbBleUpdateMoCoControlPointTxOkData(result, 3);
-            return true;
-        }
-    case 0x68:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Max Shots\n");
-            uint32_t tmp = 0;
-            if (mode == MOCO_MODE_SMS)
-            {
-                tmp = __builtin_bswap32(eep_params.mode_sms_count);
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                tmp = __builtin_bswap32(ulModePanoGetOverallCycles());
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-            }
-            uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x69:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Exposure Delay\n");
-            uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_post_time);
-            uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
-            memcpy(&result[1], &tmp, 2);
-            prbBleUpdateMoCoControlPointTxOkData(result, 3);
-            return true;
-        }
-    case 0x6C:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Interval\n");
-            uint32_t tmp = __builtin_bswap32(eep_params.mode_sms_interval);
-            uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
-            memcpy(&result[1], &tmp, 4);
-            prbBleUpdateMoCoControlPointTxOkData(result, 5);
-            return true;
-        }
-    case 0x6D:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Current Shots\n");
-            uint16_t tmp = 0;
-            if (mode == MOCO_MODE_SMS)
-            {
-                tmp = __builtin_bswap16((uint16_t)ulModeSmsGetCurrentCycle());
-            }
-            else if (mode == MOCO_MODE_VIDEO_CONT)
-            {
-            }
-            else if (mode == MOCO_MODE_PANO)
-            {
-                tmp = __builtin_bswap16((uint16_t)ulModePanoGetCurrentCycle());
-            }
-            else if (mode == MOCO_MODE_ASTRO)
-            {
-            }
-            uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
-            memcpy(&result[1], &tmp, 2);
-            prbBleUpdateMoCoControlPointTxOkData(result, 3);
-            return true;
-        }
-    case 0x6E:
-        {
-            SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Camera Test Mode\n");
-            uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
-            result[1] = ucModeSmsGetState() != MODE_SMS_STATE_STOP && bModeSmsGetCameraTestMode() ? 1 : 0;
-            prbBleUpdateMoCoControlPointTxOkData(result, 2);
-            return true;
-        }
-    }
-    
-    prvBleUpdateMoCoControlPointTxOk();
     return false;
 }
 
@@ -1180,7 +348,7 @@ void prvAciEventHandlerTask(void *pvParameters)
                             
                             if (*header1 == 0 && *header2 == 0xff00 && adr == 3)
                             {
-                                prbBleProcessMoCoControlPointRx(subadr, cmd, data, len);
+                                bBleProcessMoCoControlPointRx(subadr, cmd, data, len);
                             }
                         }
                     }
@@ -1222,19 +390,19 @@ void prvAciEventHandlerTask(void *pvParameters)
 
 static void prvJoystickWatchdogTimerCallback(void *pvParameters)
 {
-    static uint8_t last_joystick_wdg_trigger = 0;
-    
-    UNUSED(pvParameters);
+	static uint8_t last_joystick_wdg_trigger = 0;
+	
+	UNUSED(pvParameters);
 
-    if (joystick_wdg_trigger && (last_joystick_wdg_trigger != joystick_wdg_trigger))
-    {
-        SEGGER_RTT_printf(0, "Joystick Watchdog Triggered! Stopping Motors...\n");
-        for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
-        {
-            vSmStop(motor);
-        }
-    }
-    
-    last_joystick_wdg_trigger = joystick_wdg_trigger;
-    joystick_wdg_trigger = 1;
+	if (joystick_wdg_trigger && (last_joystick_wdg_trigger != joystick_wdg_trigger))
+	{
+		SEGGER_RTT_printf(0, "Joystick Watchdog Triggered! Stopping Motors...\n");
+		for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
+		{
+			vSmStop(motor);
+		}
+	}
+	
+	last_joystick_wdg_trigger = joystick_wdg_trigger;
+	joystick_wdg_trigger = 1;
 }

@@ -1042,6 +1042,15 @@
     <Compile Include="src\ASF\sam\utils\syscalls\gcc\syscalls.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\ble_camera.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ble_main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ble_motor.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\config\SEGGER_RTT_Conf.h">
       <SubType>compile</SubType>
     </Compile>
@@ -1049,6 +1058,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\config\SEGGER_SYSVIEW_Config_FreeRTOS.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\moco.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\mode_astro.c">
