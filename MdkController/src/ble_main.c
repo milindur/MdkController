@@ -216,9 +216,21 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 		}
 		case 0x1A:
 		{
-			SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Start Point\n");
+			uint8_t motor_mask = 0xff;
+			if (data_length == 1)
+			{
+				motor_mask = data[0];
+				SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Start Point with Mask %x\n", motor_mask);
+			}
+			else
+			{
+				SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Start Point\n");
+			}
+
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
+				if (((1 << motor) & motor_mask) == 0) continue;
+
 				eep_params.mode_sms_positions[0].pos[motor] = lSmGetPosition(motor);
 				eep_params.mode_pano_position_stop.pos[motor] = lSmGetPosition(motor);
 				SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program Start Point %d: %d\n", motor, lSmGetPosition(motor));
@@ -229,9 +241,21 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 		}
 		case 0x1B:
 		{
-			SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program End Point\n");
+			uint8_t motor_mask = 0xff;
+			if (data_length == 1)
+			{
+				motor_mask = data[0];
+				SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program End Point with Mask %x\n", motor_mask);
+			}
+			else
+			{
+				SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program End Point\n");
+			}
+
 			for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
 			{
+				if (((1 << motor) & motor_mask) == 0) continue;
+
 				eep_params.mode_sms_positions[1].pos[motor] = lSmGetPosition(motor);
 				eep_params.mode_pano_position_start.pos[motor] = lSmGetPosition(motor);
 				SEGGER_RTT_printf(0, "MoCoBus Control RX: Set Program End Point %d: %d\n", motor, lSmGetPosition(motor));
