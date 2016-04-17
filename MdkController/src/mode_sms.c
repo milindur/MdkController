@@ -470,7 +470,7 @@ static void prvModeSmsControlCallback(void *pvParameters)
                         uint16_t accel = SM_STEPS_TO_MRAD(labs(steps)) * 1000000UL / (avail_move_time * avail_move_time);
                         
                         accel = utilsMIN(accel, SM_STEPS_TO_MRAD(eep_params.sm[0].accel_steps));
-                        accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/16));
+                        accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/8));
                         uint16_t max_speed = accel * avail_move_time / 1000;
                         
                         ucSmMoveEx(0, steps, max_speed, accel, accel);
@@ -638,7 +638,7 @@ static void prvModeSmsControlCallback(void *pvParameters)
                             uint16_t accel = SM_STEPS_TO_MRAD(labs(steps)) * 1000000UL / (avail_move_time * avail_move_time);
                 
                             accel = utilsMIN(accel, SM_STEPS_TO_MRAD(eep_params.sm[motor].accel_steps));
-                            accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/16));
+                            accel = utilsMAX(accel, SM_STEPS_TO_MRAD(SM_SPR/8));
                             uint16_t max_speed = accel * avail_move_time / 1000;
                                 
                             ucSmMoveEx(motor, steps, max_speed, accel, accel);
