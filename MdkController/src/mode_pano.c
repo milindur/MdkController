@@ -377,6 +377,7 @@ static void prvModePanoControlCallback(void *pvParameters)
                 {
                     state = MODE_PANO_STATE_WAIT_PRE_TIME;
                     SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PRE_TIME\n");
+					step_timer = 0;
                 }
             }
             break;
@@ -393,7 +394,7 @@ static void prvModePanoControlCallback(void *pvParameters)
                     SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PRE_TIME\n");
 					current_row = 0;
 					current_col = 0;
-                    step_timer = 0;             
+                    step_timer = 0;
                     pause_timer = 0;
                 }
             }
