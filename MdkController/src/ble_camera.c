@@ -125,6 +125,15 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 			vBleUpdateMoCoControlPointTxOk();
 			return true;
 		}
+		case 0x40:
+		{
+			uint16_t pre_delay_time = __builtin_bswap16(*(uint16_t *)data);
+			SEGGER_RTT_printf(0, "MoCoBus Control RX: Pre Delay %d\n", pre_delay_time);
+			eep_params.mode_sms_pre_time = pre_delay_time;
+			
+			vBleUpdateMoCoControlPointTxOk();
+			return true;
+		}
 		case 0x64:
 		{
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Camera Enable\n");
@@ -241,6 +250,15 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 			uint8_t result[] = { MOCO_VALUE_BYTE, 0 };
 			result[1] = ucModeSmsGetState() != MODE_SMS_STATE_STOP && bModeSmsGetCameraTestMode() ? 1 : 0;
 			bBleUpdateMoCoControlPointTxOkData(result, 2);
+			return true;
+		}
+		case 0xe0:
+		{
+			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Pre Delay\n");
+			uint16_t tmp = __builtin_bswap16(eep_params.mode_sms_pre_time);
+			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
+			memcpy(&result[1], &tmp, 2);
+			bBleUpdateMoCoControlPointTxOkData(result, 3);
 			return true;
 		}
 	}
