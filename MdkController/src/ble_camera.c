@@ -69,7 +69,6 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 			}
 			else if (ucBleGetMode() == MOCO_MODE_PANO)
 			{
-				eep_params.mode_pano_count = count;
 			}
 			else if (ucBleGetMode() == MOCO_MODE_ASTRO)
 			{
@@ -130,6 +129,27 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 			uint16_t pre_delay_time = __builtin_bswap16(*(uint16_t *)data);
 			SEGGER_RTT_printf(0, "MoCoBus Control RX: Pre Delay %d\n", pre_delay_time);
 			eep_params.mode_sms_pre_time = pre_delay_time;
+			
+			vBleUpdateMoCoControlPointTxOk();
+			return true;
+		}
+		case 0x41:
+		{
+			uint16_t count = __builtin_bswap16(*(uint16_t *)data);
+			SEGGER_RTT_printf(0, "MoCoBus Control RX: Pano Repititions %d\n", count);
+			if (ucBleGetMode() == MOCO_MODE_SMS)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_VIDEO_CONT)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_PANO)
+			{
+				eep_params.mode_pano_count = count;
+			}
+			else if (ucBleGetMode() == MOCO_MODE_ASTRO)
+			{
+			}
 			
 			vBleUpdateMoCoControlPointTxOk();
 			return true;
@@ -259,6 +279,28 @@ bool bBleProcessMoCoControlPointRxCamera(uint8_t cmd, uint8_t * data, uint8_t da
 			uint8_t result[] = { MOCO_VALUE_UINT, 0, 0 };
 			memcpy(&result[1], &tmp, 2);
 			bBleUpdateMoCoControlPointTxOkData(result, 3);
+			return true;
+		}
+		case 0xe1:
+		{
+			SEGGER_RTT_printf(0, "MoCoBus Control RX: Get Pano Repititions\n");
+			uint32_t tmp = 0;
+			if (ucBleGetMode() == MOCO_MODE_SMS)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_VIDEO_CONT)
+			{
+			}
+			else if (ucBleGetMode() == MOCO_MODE_PANO)
+			{
+				tmp = __builtin_bswap32(eep_params.mode_pano_count);
+			}
+			else if (ucBleGetMode() == MOCO_MODE_ASTRO)
+			{
+			}
+			uint8_t result[] = { MOCO_VALUE_LONG, 0, 0, 0, 0 };
+			memcpy(&result[1], &tmp, 4);
+			bBleUpdateMoCoControlPointTxOkData(result, 5);
 			return true;
 		}
 	}
