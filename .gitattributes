@@ -9,6 +9,7 @@
 *.xaml  	text eol=crlf
 *.xml  		text eol=crlf
 *.config	text eol=crlf
+*.command	text eol=lf
 
 *.sln       text eol=crlf merge=binary
 *.atsln     text eol=crlf merge=binary
@@ -35,4 +36,4 @@
 *.png   binary
 *.gif   binary
 *.pdf   binary
-
+bossac	binary
