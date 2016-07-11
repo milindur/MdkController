@@ -3,7 +3,7 @@ Motion-Controller zur Ansteuerung von 3 Schrittmotoren für Foto-, Zeitraffer- u
 
 ## Downloads
 
-* [Update-Tool](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.2/MdkControllerUpdate.exe)
+* [Update-Tool](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.4/MdkControllerUpdate.exe)
 * [Treiber](https://github.com/milindur/MdkControllerUpdate/releases/download/v1.2/drivers.zip)
 
 ## Firmware
