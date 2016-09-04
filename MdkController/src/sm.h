@@ -42,7 +42,7 @@
 #define SM_STATE_CONT       4
 #define SM_STATE_CONT_SLOW  5
 
-void vSmInit();
+void vSmInit(void);
 void vSmSetMicrostepMode(uint8_t motor, uint8_t mode);
 void vSmReload(void);
 void vSmEnable(uint8_t motor, uint8_t enable);
