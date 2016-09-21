@@ -401,18 +401,14 @@
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
 </ArmGcc>
     </ToolchainSettings>
-    <PostBuildEvent>
-      if exist "$(OutputDirectory)\update" del /f /s /y "$(OutputDirectory)\update\*"
-      xcopy /y "$(SolutionDir)\update\*.*" "$(OutputDirectory)\update\"
-      xcopy /y "$(SolutionDir)\drivers\*.*" "$(OutputDirectory)\update\drivers\"
-      xcopy /y "$(OutputDirectory)\$(OutputFileName).bin" "$(OutputDirectory)\update\"
-      cd "$(OutputDirectory)\update"
-      del /f mdkcontroller.zip
-      "$(SolutionDir)\contrib\7z.exe" a -r -tzip mdkcontroller.zip *.*
-    </PostBuildEvent>
-    <PreBuildEvent>
-      copy "$(MSBuildProjectDirectory)\src\version.c"+nul "$(MSBuildProjectDirectory)\src\version.c" /by
-    </PreBuildEvent>
+    <PostBuildEvent>if exist "$(OutputDirectory)\update" del /f /s /y "$(OutputDirectory)\update\*"
+xcopy /y "$(SolutionDir)\update\*.*" "$(OutputDirectory)\update\"
+xcopy /y "$(SolutionDir)\drivers\*.*" "$(OutputDirectory)\update\drivers\"
+xcopy /y "$(OutputDirectory)\$(OutputFileName).bin" "$(OutputDirectory)\update\"
+cd "$(OutputDirectory)\update"
+del /f mdkcontroller.zip
+"$(SolutionDir)\contrib\7z.exe" a -r -tzip mdkcontroller.zip *.*</PostBuildEvent>
+    <PreBuildEvent>copy "$(MSBuildProjectDirectory)\src\version.c"+nul "$(MSBuildProjectDirectory)\src\version.c" /by</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <ToolchainSettings>
@@ -433,50 +429,49 @@
       <Value>scanf=iscanf</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
-  <armgcc.compiler.directories.DefaultIncludePath>False</armgcc.compiler.directories.DefaultIncludePath>
   <armgcc.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>../common/applications/user_application/sam3x8e_arduino_due_x/config</Value>
-      <Value>../src/ASF/sam/drivers/tc</Value>
-      <Value>../src/ASF/sam/drivers/spi</Value>
-      <Value>../src/ASF/sam/drivers/wdt</Value>
-      <Value>../src/ASF/common/services/delay</Value>
-      <Value>../src/ASF/common/services/spi/sam_spi</Value>
-      <Value>../src/ASF/common/services/spi</Value>
-      <Value>../src/ASF/common/services/sleepmgr</Value>
-      <Value>../src/config</Value>
-      <Value>../src</Value>
-      <Value>../src/RTT</Value>
-      <Value>../src/BLE</Value>
-      <Value>../src/FreeRTOS/include</Value>
-      <Value>../src/FreeRTOS/portable</Value>
-      <Value>../src/GenericRecorderLibSrc/Include</Value>
-      <Value>../src/ASF/sam/drivers/efc</Value>
-      <Value>../src/ASF/sam/services/flash_efc</Value>
-      <Value>../src/ASF/common/drivers/nvm</Value>
-      <Value>../src/GenericRecorderLibSrc/Configuration</Value>
-      <Value>../src/ASF/sam/boards</Value>
-      <Value>../src/ASF/sam/boards/arduino_due_x</Value>
-      <Value>../src/ASF/sam/utils/cmsis/sam3x/source/templates</Value>
-      <Value>../src/ASF/sam/utils/cmsis/sam3x/include</Value>
-      <Value>../src/ASF/common/boards</Value>
-      <Value>../src/ASF/sam/utils</Value>
-      <Value>../src/ASF/sam/utils/header_files</Value>
-      <Value>../src/ASF/sam/utils/preprocessor</Value>
-      <Value>../src/ASF/thirdparty/CMSIS/Include</Value>
-      <Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
-      <Value>../src/ASF/common/utils</Value>
-      <Value>../src/ASF/common/services/gpio</Value>
-      <Value>../src/ASF/sam/drivers/pio</Value>
-      <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/clock</Value>
-      <Value>../src/ASF/sam/drivers/pmc</Value>
-    </ListValues>
+		<Value>../src/ASF/common/boards</Value>
+		<Value>../src/ASF/sam/utils</Value>
+		<Value>../src/ASF/sam/utils/header_files</Value>
+		<Value>../src/ASF/sam/utils/preprocessor</Value>
+		<Value>../src/ASF/thirdparty/CMSIS/Include</Value>
+		<Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
+		<Value>../src/ASF/common/utils</Value>
+		<Value>../src/ASF/sam/utils/cmsis/sam3x/source/templates</Value>
+		<Value>../src/ASF/sam/utils/cmsis/sam3x/include</Value>
+		<Value>../src/ASF/sam/boards</Value>
+		<Value>../src/ASF/sam/boards/arduino_due_x</Value>
+		<Value>../src/ASF/common/services/gpio</Value>
+		<Value>../src/ASF/sam/drivers/pio</Value>
+		<Value>../src/ASF/common/services/ioport</Value>
+		<Value>../src/ASF/common/services/clock</Value>
+		<Value>../src/ASF/sam/drivers/pmc</Value>
+		<Value>../src/ASF/common/services/delay</Value>
+		<Value>../src/ASF/common/services/spi/sam_spi</Value>
+		<Value>../src/ASF/common/services/spi</Value>
+		<Value>../src/ASF/common/services/sleepmgr</Value>
+		<Value>../src/ASF/sam/drivers/tc</Value>
+		<Value>../src/ASF/sam/drivers/spi</Value>
+		<Value>../src/ASF/sam/drivers/wdt</Value>
+		<Value>../src/ASF/common/drivers/nvm</Value>
+		<Value>../src/ASF/sam/services/flash_efc</Value>
+		<Value>../src/ASF/sam/drivers/efc</Value>
+		<Value>../src</Value>
+		<Value>../src/config</Value>
+		<Value>../src/RTT</Value>
+		<Value>../src/BLE</Value>
+		<Value>../src/FreeRTOS/include</Value>
+		<Value>../src/FreeRTOS/portable</Value>
+		<Value>../src/GenericRecorderLibSrc/Configuration</Value>
+		<Value>../src/GenericRecorderLibSrc/Include</Value>
+	</ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
   <armgcc.compiler.optimization.PrepareDataForGarbageCollection>True</armgcc.compiler.optimization.PrepareDataForGarbageCollection>
   <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+  <armgcc.compiler.miscellaneous.OtherFlags>-pipe -fno-strict-aliasing -Wall -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -std=gnu99 -ffunction-sections -fdata-sections -Wchar-subscripts -Wcomment -Wformat=2 -Wimplicit-int -Wmain -Wparentheses -Wsequence-point -Wreturn-type -Wswitch -Wtrigraphs -Wunused -Wuninitialized -Wunknown-pragmas -Wfloat-equal -Wundef -Wshadow -Wbad-function-cast -Wwrite-strings -Wsign-compare -Waggregate-return  -Wmissing-declarations -Wformat -Wmissing-format-attribute -Wno-deprecated-declarations -Wnested-externs -Wlong-long -Wunreachable-code --param max-inline-insns-single=500</armgcc.compiler.miscellaneous.OtherFlags>
   <armgcc.linker.general.UseNewlibNano>True</armgcc.linker.general.UseNewlibNano>
   <armgcc.linker.libraries.Libraries>
     <ListValues>
@@ -494,72 +489,70 @@
   <armgcc.linker.miscellaneous.LinkerFlags>-u _printf_float -Wl,--entry=Reset_Handler -Wl,--cref -mthumb -T../src/linker_scripts/flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.general.IncludePaths>
     <ListValues>
-      <Value>../src/ASF/sam/drivers/efc</Value>
-      <Value>../src/ASF/sam/drivers/tc</Value>
-      <Value>../src/ASF/sam/services/flash_efc</Value>
-      <Value>../src/Config</Value>
-      <Value>../src/ASF/common/drivers/nvm</Value>
-      <Value>../src/ASF/common/services/delay</Value>
-      <Value>../src/ASF/common/services/sleepmgr</Value>
-      <Value>../src/ASF/sam/drivers/spi</Value>
-      <Value>../src/ASF/sam/drivers/wdt</Value>
-      <Value>../src/ASF/sam/boards</Value>
-      <Value>../src/ASF/sam/boards/arduino_due_x</Value>
-      <Value>../src/ASF/sam/utils/cmsis/sam3x/source/templates</Value>
-      <Value>../src/ASF/sam/utils/cmsis/sam3x/include</Value>
-      <Value>../src/ASF/common/boards</Value>
-      <Value>../src/ASF/sam/utils</Value>
-      <Value>../src/ASF/sam/utils/header_files</Value>
-      <Value>../src/ASF/sam/utils/preprocessor</Value>
-      <Value>../src/ASF/thirdparty/CMSIS/Include</Value>
-      <Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
-      <Value>../src/ASF/common/utils</Value>
-      <Value>../src/ASF/common/services/gpio</Value>
-      <Value>../src/ASF/sam/drivers/pio</Value>
-      <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/clock</Value>
-      <Value>../src/ASF/sam/drivers/pmc</Value>
-    </ListValues>
+		<Value>../src/ASF/common/boards</Value>
+		<Value>../src/ASF/sam/utils</Value>
+		<Value>../src/ASF/sam/utils/header_files</Value>
+		<Value>../src/ASF/sam/utils/preprocessor</Value>
+		<Value>../src/ASF/thirdparty/CMSIS/Include</Value>
+		<Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
+		<Value>../src/ASF/common/utils</Value>
+		<Value>../src/ASF/sam/utils/cmsis/sam3x/source/templates</Value>
+		<Value>../src/ASF/sam/utils/cmsis/sam3x/include</Value>
+		<Value>../src/ASF/sam/boards</Value>
+		<Value>../src/ASF/sam/boards/arduino_due_x</Value>
+		<Value>../src/ASF/common/services/gpio</Value>
+		<Value>../src/ASF/sam/drivers/pio</Value>
+		<Value>../src/ASF/common/services/ioport</Value>
+		<Value>../src/ASF/common/services/clock</Value>
+		<Value>../src/ASF/sam/drivers/pmc</Value>
+		<Value>../src/ASF/sam/drivers/efc</Value>
+		<Value>../src/ASF/sam/drivers/tc</Value>
+		<Value>../src/ASF/sam/services/flash_efc</Value>
+		<Value>../src/ASF/common/drivers/nvm</Value>
+		<Value>../src/ASF/common/services/delay</Value>
+		<Value>../src/ASF/common/services/sleepmgr</Value>
+		<Value>../src/ASF/sam/drivers/spi</Value>
+		<Value>../src/ASF/sam/drivers/wdt</Value>
+		<Value>../src/Config</Value>
+	</ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.AssemblerFlags>-DARM_MATH_CM3=true -D__SAM3X8E__ -DBOARD=ARDUINO_DUE_X -Dprintf=iprintf -Dscanf=iscanf</armgcc.preprocessingassembler.general.AssemblerFlags>
-  <armgcc.preprocessingassembler.general.DefaultIncludePath>False</armgcc.preprocessingassembler.general.DefaultIncludePath>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>../common/applications/user_application/sam3x8e_arduino_due_x/config</Value>
-      <Value>../src/ASF/sam/drivers/tc</Value>
-      <Value>../src/ASF/sam/drivers/spi</Value>
-      <Value>../src/ASF/sam/drivers/wdt</Value>
-      <Value>../src/ASF/common/services/delay</Value>
-      <Value>../src/ASF/common/services/spi/sam_spi</Value>
-      <Value>../src/ASF/common/services/spi</Value>
-      <Value>../src/ASF/common/services/sleepmgr</Value>
-      <Value>../src/config</Value>
-      <Value>../src</Value>
-      <Value>../src/RTT</Value>
-      <Value>../src/BLE</Value>
-      <Value>../src/FreeRTOS/include</Value>
-      <Value>../src/FreeRTOS/portable</Value>
-      <Value>../src/ASF/sam/drivers/efc</Value>
-      <Value>../src/ASF/sam/services/flash_efc</Value>
-      <Value>../src/ASF/common/drivers/nvm</Value>
-      <Value>../src/ASF/sam/boards</Value>
-      <Value>../src/ASF/sam/boards/arduino_due_x</Value>
-      <Value>../src/ASF/sam/utils/cmsis/sam3x/source/templates</Value>
-      <Value>../src/ASF/sam/utils/cmsis/sam3x/include</Value>
-      <Value>../src/ASF/common/boards</Value>
-      <Value>../src/ASF/sam/utils</Value>
-      <Value>../src/ASF/sam/utils/header_files</Value>
-      <Value>../src/ASF/sam/utils/preprocessor</Value>
-      <Value>../src/ASF/thirdparty/CMSIS/Include</Value>
-      <Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
-      <Value>../src/ASF/common/utils</Value>
-      <Value>../src/ASF/common/services/gpio</Value>
-      <Value>../src/ASF/sam/drivers/pio</Value>
-      <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/clock</Value>
-      <Value>../src/ASF/sam/drivers/pmc</Value>
-    </ListValues>
+		<Value>../src/ASF/sam/drivers/tc</Value>
+		<Value>../src/ASF/sam/drivers/spi</Value>
+		<Value>../src/ASF/sam/drivers/wdt</Value>
+		<Value>../src/ASF/common/services/delay</Value>
+		<Value>../src/ASF/common/services/spi/sam_spi</Value>
+		<Value>../src/ASF/common/services/spi</Value>
+		<Value>../src/ASF/common/services/sleepmgr</Value>
+		<Value>../src/config</Value>
+		<Value>../src</Value>
+		<Value>../src/RTT</Value>
+		<Value>../src/BLE</Value>
+		<Value>../src/FreeRTOS/include</Value>
+		<Value>../src/FreeRTOS/portable</Value>
+		<Value>../src/ASF/sam/drivers/efc</Value>
+		<Value>../src/ASF/sam/services/flash_efc</Value>
+		<Value>../src/ASF/common/drivers/nvm</Value>
+		<Value>../src/ASF/sam/boards</Value>
+		<Value>../src/ASF/sam/boards/arduino_due_x</Value>
+		<Value>../src/ASF/sam/utils/cmsis/sam3x/source/templates</Value>
+		<Value>../src/ASF/sam/utils/cmsis/sam3x/include</Value>
+		<Value>../src/ASF/common/boards</Value>
+		<Value>../src/ASF/sam/utils</Value>
+		<Value>../src/ASF/sam/utils/header_files</Value>
+		<Value>../src/ASF/sam/utils/preprocessor</Value>
+		<Value>../src/ASF/thirdparty/CMSIS/Include</Value>
+		<Value>../src/ASF/thirdparty/CMSIS/Lib/GCC</Value>
+		<Value>../src/ASF/common/utils</Value>
+		<Value>../src/ASF/common/services/gpio</Value>
+		<Value>../src/ASF/sam/drivers/pio</Value>
+		<Value>../src/ASF/common/services/ioport</Value>
+		<Value>../src/ASF/common/services/clock</Value>
+		<Value>../src/ASF/sam/drivers/pmc</Value>
+	</ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
 </ArmGcc>
