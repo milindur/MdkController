@@ -27,6 +27,13 @@
 #define SM_MAX_SPEED_STEPS          (6*SM_SPR)
 #define SM_MAX_STEALTH_SPEED_STEPS  (4*SM_SPR)
 
+#define SM_GEAR_REDUCTION_MDKv5		(60.0*(19.0/30.0)*(5.0+2.0/11.0))
+#define SM_GEAR_REDUCTION_MDKv6		(60.0)
+#define SM_GEAR_REDUCTION_NICOTILT	(32.0)
+
+#define SM_ASTRO_SIDEREAL_FACTOR    (0.99726958)
+#define SM_ASTRO_LUNAR_FACTOR       (1.03387012)
+
 #define SM_MOTORS_USED      3
 
 #define SM_CW               1
@@ -52,7 +59,7 @@ int32_t lSmGetMaxSpeed(uint8_t motor);
 uint8_t ucSmMove(uint8_t motor, int32_t step);
 uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, uint16_t decel);
 bool bSmMoveContinuous(uint8_t motor, int32_t speed);
-bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, uint8_t mode);
+bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, float_t gear_reduction, float_t factor);
 void vSmStop(uint8_t motor);
 void vSmEmergencyStop(uint8_t motor);
 void vSmResetPosition(uint8_t motor);

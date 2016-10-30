@@ -49,18 +49,8 @@
 
 #define SM_MIN_STEALTH_STEP_DELAY   (A_T_x1000 / SM_MAX_STEALTH_SPEED_STEPS)
 
-#define GEAR_REDUCTION_MDKv5		(60.0*(19.0/30.0)*(5.0+2.0/11.0))
-#define GEAR_REDUCTION_MDKv6		(60.0)
-#define GEAR_REDUCTION_NICOTILT		(32.0)
-#define GEAR_REDUCTION				GEAR_REDUCTION_MDKv5
-
-#define SIDEREAL_FACTOR             (0.99726958)
-#define ASTRO_SIDEREAL_SPEED        ((int32_t)(GEAR_REDUCTION*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR)))
-#define ASTRO_SIDEREAL_STEP_DELAY   ((uint32_t)(A_T_x1000/(GEAR_REDUCTION*2*M_PI*1000/(24*3600*SIDEREAL_FACTOR))))
-
-#define LUNAR_FACTOR                (1.03387012)
-#define ASTRO_LUNAR_SPEED           ((int32_t)(GEAR_REDUCTION*2*M_PI*1000/(24*3600*LUNAR_FACTOR)))
-#define ASTRO_LUNAR_STEP_DELAY      ((uint32_t)(A_T_x1000/(GEAR_REDUCTION*2*M_PI*1000/(24*3600*LUNAR_FACTOR))))
+#define ASTRO_SPEED(gear_reduction, factor)        ((int32_t)(gear_reduction*2*M_PI*1000/(24*3600*factor)))
+#define ASTRO_STEP_DELAY(gear_reduction, factor)   ((uint32_t)(A_T_x1000/(gear_reduction*2*M_PI*1000/(24*3600*factor))))
 
 #define CW  1
 #define CCW 0
@@ -413,7 +403,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
     return true;
 }
 
-bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, uint8_t mode)
+bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, float_t gear_reduction, float_t factor)
 {
     uint8_t sm_state = ucSmGetState(motor);
     
@@ -426,22 +416,10 @@ bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, uint8_t mode)
 
     sm_state_t * state = &_state[motor];
 
-    int32_t astro_speed = 0;
-    uint32_t astro_step_delay = 0;
+    int32_t astro_speed = ASTRO_SPEED(gear_reduction, factor);
+    uint32_t astro_step_delay = ASTRO_STEP_DELAY(gear_reduction, factor);
 
-    switch (mode)
-    {
-    case SM_ASTRO_SIDEREAL:
-        astro_speed = ASTRO_SIDEREAL_SPEED;
-        astro_step_delay = ASTRO_SIDEREAL_STEP_DELAY;
-        break;
-    case SM_ASTRO_LUNAR:
-        astro_speed = ASTRO_LUNAR_SPEED;
-        astro_step_delay = ASTRO_LUNAR_STEP_DELAY;
-        break;
-    }
-
-    SEGGER_RTT_printf(0, "move cont astro [%d]: %d/%d, %d, %d\n", motor, dir, mode, astro_speed, astro_step_delay);
+    SEGGER_RTT_printf(0, "move cont astro [%d]: dir=%d, gear=%.2f, factor=%.4f, speed=%d, delay=%d\n", motor, dir, gear_reduction, factor, astro_speed, astro_step_delay);
 
     if (dir == SM_CW)
     {

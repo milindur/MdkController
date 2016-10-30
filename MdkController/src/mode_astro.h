@@ -26,7 +26,7 @@
 #define MODE_ASTRO_STATE_SLEEP_SM           8
 
 void vModeAstroInit(void);
-void vModeAstroStart(uint8_t dir, uint8_t spd);
+void vModeAstroStart(uint8_t motor_mask, uint8_t dir, float_t gear, float_t fact);
 void vModeAstroPause(void);
 void vModeAstroResume(void);
 void vModeAstroStop(void);
