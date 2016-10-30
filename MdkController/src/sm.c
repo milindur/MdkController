@@ -43,8 +43,8 @@
 #define T_FREQ      (84000000/T_PRESCALE)
 #define ALPHA       (2*M_PI/SM_SPR)                     // 2*PI / SPR
 #define A_T_x1000   ((int32_t)(ALPHA*T_FREQ*1000))      // (ALPHA * T_FREQ)*1000
-#define T_FREQ_148  ((int16_t)((T_FREQ*0.676)/100))     // divided by 100 and scaled by 0.676
-#define A_SQ        ((int64_t)(ALPHA*2*100000000000))   // ALPHA*2*100000000000
+#define T_FREQ_148  ((uint64_t)((T_FREQ*0.676)/100))    // divided by 100 and scaled by 0.676
+#define A_SQ        ((int32_t)(ALPHA*2*100000000000ll))   // ALPHA*2*100000000000
 #define A_x200000   ((int64_t)(ALPHA*2*100000))         // ALPHA*2*100000
 
 #define SM_MIN_STEALTH_STEP_DELAY   (A_T_x1000 / SM_MAX_STEALTH_SPEED_STEPS)
@@ -108,6 +108,8 @@ static uint32_t prulFastSqrt(uint32_t v);
 static inline void prvStep(uint8_t motor, uint8_t dir);
 static inline void prvSmEnableFromISR(uint8_t motor, uint8_t enable);
 static void prvContinuousControlTask(void *pvParameters);
+
+void prvSmIsrHandler(uint8_t motor);
 
 void vSmInit(void)
 {
@@ -380,7 +382,7 @@ bool bSmMoveContinuous(uint8_t motor, int32_t speed)
             state->speed_cont_target_mrad = speed;
 
             // calculate first step delay
-            uint64_t step_delay_tmp = (T_FREQ_148 * prulFastSqrt(A_SQ / state->accel_mrad)) / 100;
+            uint64_t step_delay_tmp = (T_FREQ_148 * (uint64_t)prulFastSqrt(A_SQ / state->accel_mrad)) / 100;
             if (step_delay_tmp > INT32_MAX)
             {
                 step_delay_tmp = INT32_MAX;
@@ -625,7 +627,7 @@ uint8_t ucSmMoveEx(uint8_t motor, int32_t step, uint16_t speed, uint16_t accel, 
         state->min_step_delay = A_T_x1000 / speed;
 
         // Set acceleration by calc the first step delay.
-        uint64_t step_delay_tmp = (T_FREQ_148 * prulFastSqrt(A_SQ / accel)) / 100;
+        uint64_t step_delay_tmp = (T_FREQ_148 * (uint64_t)prulFastSqrt(A_SQ / accel)) / 100;
         if (step_delay_tmp > INT32_MAX)
         {
             step_delay_tmp = INT32_MAX;

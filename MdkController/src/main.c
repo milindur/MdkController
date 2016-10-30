@@ -32,6 +32,8 @@ void vApplicationIdleHook(void);
 void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName);
 void vApplicationTickHook(void);
 
+void __ble_assert(const char * file, uint16_t line);
+
 /* Define how assert should function in the BLE library */
 void __ble_assert(const char * file, uint16_t line)
 {
