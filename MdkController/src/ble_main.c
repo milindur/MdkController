@@ -90,45 +90,56 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 				}
 				else
 				{
-					if (data_length == 6)
+					if (data_length == 7)
 					{
-						uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
-						float_t factor = data[1] == 0 ? SM_ASTRO_SIDEREAL_FACTOR : SM_ASTRO_LUNAR_FACTOR;
+						uint8_t motor_mask = data[0];
+						uint8_t dir = data[1] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
+						float_t factor = data[2] == 0 ? SM_ASTRO_SIDEREAL_FACTOR : SM_ASTRO_LUNAR_FACTOR;
 						
 						uint32_t tmp;
-						memcpy(&tmp, &data[2], 4);
+						memcpy(&tmp, &data[3], 4);
 						tmp = __builtin_bswap32(tmp);
 						float_t gear_reduction = 0;
 						memcpy(&gear_reduction, &tmp, 4);
 
-						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %.2f / %.4f\n", dir, gear_reduction, factor);
-						vModeAstroStart(1, dir, gear_reduction, factor);
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %f / %f\n", dir, gear_reduction, factor);
+						vModeAstroStart(motor_mask, dir, gear_reduction, factor);
 					}
-					else if (data_length == 3)
+					else if (data_length == 4)
 					{
-						uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
-						float_t factor = data[1] == 0 ? SM_ASTRO_SIDEREAL_FACTOR : SM_ASTRO_LUNAR_FACTOR;
+						uint8_t motor_mask = data[0];
+						uint8_t dir = data[1] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
+						float_t factor = data[2] == 0 ? SM_ASTRO_SIDEREAL_FACTOR : SM_ASTRO_LUNAR_FACTOR;
 						float_t gear_reduction = 0;
-						switch (data[2])
+						switch (data[3])
 						{
 							default:
 								gear_reduction = SM_GEAR_REDUCTION_MDKv5;
 								break;
 							case 1:
 								gear_reduction = SM_GEAR_REDUCTION_MDKv6;
+								// HACK: swap direction for MDKv6 (this should be done using the eep settings)
+								if (dir == MODE_ASTRO_DIR_NORTH) 
+								{
+									dir = MODE_ASTRO_DIR_SOUTH;
+								}
+								else if (dir == MODE_ASTRO_DIR_SOUTH) 
+								{
+									dir = MODE_ASTRO_DIR_NORTH;
+								}
 								break;
 							case 2:
 								gear_reduction = SM_GEAR_REDUCTION_NICOTILT;
 								break;
 						}
-						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %.2f / %.4f\n", dir, gear_reduction, factor);
-						vModeAstroStart(1, dir, gear_reduction, factor);
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %f / %f\n", dir, gear_reduction, factor);
+						vModeAstroStart(motor_mask, dir, gear_reduction, factor);
 					}
 					else if (data_length == 2)
 					{
 						uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
 						float_t factor = data[1] == 0 ? SM_ASTRO_SIDEREAL_FACTOR : SM_ASTRO_LUNAR_FACTOR;
-						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %.4f\n", dir, factor);
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %f\n", dir, factor);
 						vModeAstroStart(1, dir, SM_GEAR_REDUCTION_MDKv5, factor);
 					}
 					else if (data_length == 1)
