@@ -187,7 +187,7 @@ static void prvModeAstroControlCallback(void *pvParameters)
             {
                 int32_t steps = direction == MODE_ASTRO_DIR_NORTH ? SM_SPR : -1 * SM_SPR;
 
-                for (uint8_t motor = 0; motor < 1; motor++)
+                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                 {
 					if (((1 << motor) & motors) != 0)
 					{
