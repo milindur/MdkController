@@ -67,6 +67,8 @@ static aci_cmd_params_open_adv_pipe_t aci_cmd_params_open_adv_pipe;
 extern aci_queue_t    aci_rx_q;
 extern aci_queue_t    aci_tx_q;
 
+void lib_aci_board_init(aci_state_t *aci_stat);
+
 bool lib_aci_is_pipe_available(aci_state_t *aci_stat, uint8_t pipe)
 {
   uint8_t byte_idx;
