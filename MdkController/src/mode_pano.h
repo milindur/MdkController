@@ -23,7 +23,7 @@
 #define MODE_PANO_STATE_SLEEP_SM            11
 
 void vModePanoInit(void);
-void vModePanoStart(void);
+void vModePanoStart(uint8_t motor_mask, bool allow_reversed_order);
 void vModePanoPause(void);
 void vModePanoResume(void);
 void vModePanoStop(void);

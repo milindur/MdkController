@@ -77,8 +77,18 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 				}
 				else
 				{
-					SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Pano\n");
-					vModePanoStart();
+					if (data_length == 2)
+					{
+						uint8_t motor_mask = data[0];
+						bool allow_reversed = data[1] != 0 ? true : false;
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Pano %d / %d\n", motor_mask, allow_reversed);
+						vModePanoStart(motor_mask, allow_reversed);
+					}
+					else
+					{
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Pano\n");
+						vModePanoStart(SM_MOTOR_1 | SM_MOTOR_2, 0);
+					}
 				}
 			}
 			else if (ucBleGetMode() == MOCO_MODE_ASTRO)

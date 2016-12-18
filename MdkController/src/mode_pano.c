@@ -21,12 +21,15 @@
 
 static uint8_t state = MODE_PANO_STATE_STOP;
 static bool finished = false;
+static int8_t current_dir = 1;
 static uint32_t current_step;
 static uint32_t current_loop;
 static int32_t current_row;
 static int32_t max_rows;
 static int32_t current_col;
 static int32_t max_cols;
+static bool allow_reversed = true;
+static uint8_t motors = SM_MOTOR_ALL;
 static int32_t steps[SM_MOTORS_USED];
 static uint32_t step_timer;
 static uint32_t pause_timer;
@@ -69,36 +72,57 @@ void vModePanoResume(void)
     xTimerStart(xModePanoControlTimer, 0);
 }
 
-void vModePanoStart(void)
+void vModePanoStart(uint8_t motor_mask, bool allow_reversed_order)
 {
     if (state != MODE_PANO_STATE_STOP) return;
     
     taskENTER_CRITICAL();
     {
+		motors = motor_mask;
+		allow_reversed = allow_reversed_order;
+		
         int32_t pan_steps_per_col = abs(eep_params.mode_pano_position_ref_stop.pos[1] - eep_params.mode_pano_position_ref_start.pos[1]) * (100 - 34) / 100;
         int32_t tilt_steps_per_row = abs(eep_params.mode_pano_position_ref_stop.pos[2] - eep_params.mode_pano_position_ref_start.pos[2]) * (100 - 34) / 100;
 
         if (eep_params.mode_pano_position_stop.pos[1] < eep_params.mode_pano_position_start.pos[1]) pan_steps_per_col *= -1;
         if (eep_params.mode_pano_position_stop.pos[2] < eep_params.mode_pano_position_start.pos[2]) tilt_steps_per_row *= -1;
 
-        max_cols = abs((eep_params.mode_pano_position_stop.pos[1] - eep_params.mode_pano_position_start.pos[1]) / pan_steps_per_col) + 1;
-        max_rows = abs((eep_params.mode_pano_position_stop.pos[2] - eep_params.mode_pano_position_start.pos[2]) / tilt_steps_per_row) + 1;
-        
-        if (eep_params.mode_pano_position_start.pos[1] + (max_cols - 1) * pan_steps_per_col < eep_params.mode_pano_position_stop.pos[1])
-        {
-            max_cols++;
-        }
-        if (eep_params.mode_pano_position_start.pos[2] + (max_rows - 1) * tilt_steps_per_row < eep_params.mode_pano_position_stop.pos[2])
-        {
-            max_rows++;
-        }
-        
-        pan_steps_per_col = (int32_t)(eep_params.mode_pano_position_stop.pos[1] - eep_params.mode_pano_position_start.pos[1]) / (int32_t)max_cols;
-        tilt_steps_per_row = (int32_t)(eep_params.mode_pano_position_stop.pos[2] - eep_params.mode_pano_position_start.pos[2]) / (int32_t)max_rows;
+		if ((motors & SM_MOTOR_1) == 0 || (eep_params.mode_pano_position_stop.pos[1] == eep_params.mode_pano_position_start.pos[1]))
+		{
+			pan_steps_per_col = 0;
+			max_cols = 0;
+			eep_params.mode_pano_position_stop.pos[1] = eep_params.mode_pano_position_start.pos[1];
+		}
+		else
+		{
+			max_cols = abs((eep_params.mode_pano_position_stop.pos[1] - eep_params.mode_pano_position_start.pos[1]) / pan_steps_per_col) + 1;
+			if (eep_params.mode_pano_position_start.pos[1] + (max_cols - 1) * pan_steps_per_col < eep_params.mode_pano_position_stop.pos[1])
+			{
+				max_cols++;
+			}
+			pan_steps_per_col = (int32_t)(eep_params.mode_pano_position_stop.pos[1] - eep_params.mode_pano_position_start.pos[1]) / (int32_t)max_cols;
+		}
+
+		if ((motors & SM_MOTOR_2) == 0 || (eep_params.mode_pano_position_stop.pos[2] == eep_params.mode_pano_position_start.pos[2]))
+		{
+			tilt_steps_per_row = 0;
+			max_rows = 0;
+			eep_params.mode_pano_position_stop.pos[2] = eep_params.mode_pano_position_start.pos[2];
+		}
+		else
+		{
+	        max_rows = abs((eep_params.mode_pano_position_stop.pos[2] - eep_params.mode_pano_position_start.pos[2]) / tilt_steps_per_row) + 1;
+			if (eep_params.mode_pano_position_start.pos[2] + (max_rows - 1) * tilt_steps_per_row < eep_params.mode_pano_position_stop.pos[2])
+			{
+				max_rows++;
+			}
+			tilt_steps_per_row = (int32_t)(eep_params.mode_pano_position_stop.pos[2] - eep_params.mode_pano_position_start.pos[2]) / (int32_t)max_rows;
+		}
         
         steps[1] = pan_steps_per_col;
         steps[2] = tilt_steps_per_row;
         
+		current_dir = 1;
         current_step = 0;
         current_loop = 0;
         current_row = 0;
@@ -235,10 +259,13 @@ static void prvModePanoControlCallback(void *pvParameters)
             break;
         case MODE_PANO_STATE_WAKE_SM:
             {
-                for (uint8_t motor = 1; motor <= 2; motor++)
+                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                 {
-                    if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
-                    if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
+	                if (((1 << motor) & motors) != 0)
+	                {
+						if (eep_params.sm[motor].power_save == 0) vSmEnable(motor, 1);
+						if (eep_params.sm[motor].power_save == 2) vSmEnable(motor, 2);
+	                }
                 }
             }
             state = MODE_PANO_STATE_GOTO_START;
@@ -246,9 +273,12 @@ static void prvModePanoControlCallback(void *pvParameters)
             break;
         case MODE_PANO_STATE_GOTO_START:
             {
-                for (uint8_t motor = 1; motor <= 2; motor++)
+                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                 {
-                    ucSmMove(motor, eep_params.mode_pano_position_start.pos[motor] - lSmGetPosition(motor));
+	                if (((1 << motor) & motors) != 0)
+	                {
+						ucSmMove(motor, eep_params.mode_pano_position_start.pos[motor] - lSmGetPosition(motor));
+	                }
                 }
             }
             state = MODE_PANO_STATE_WAIT_START;
@@ -294,28 +324,30 @@ static void prvModePanoControlCallback(void *pvParameters)
         case MODE_PANO_STATE_WAIT_POST_TIME:
             if (step_timer >= eep_params.mode_sms_post_time)
             {
-                if ((current_row % 2) == 0)
-                {
+				if (current_dir > 0)
+				{
                     if (current_col < max_cols)
                     {
-                        current_col++;
+	                    current_col++;
                     }
                     else
                     {
-                        current_row++;
+	                    current_row++;
+						current_dir = -1;
                     }
-                }
-                else
-                {
+				}
+				else
+				{
                     if (current_col > 0)
                     {
-                        current_col--;
+	                    current_col--;
                     }
                     else
                     {
-                        current_row++;
+	                    current_row++;
+						current_dir = 1;
                     }
-                }
+				}
 
                 if (current_row > max_rows)
                 {
@@ -327,10 +359,35 @@ static void prvModePanoControlCallback(void *pvParameters)
                     }
                     else
                     {
-                        for (uint8_t motor = 1; motor <= 2; motor++)
-                        {
-                            ucSmMove(motor, eep_params.mode_pano_position_start.pos[motor] - lSmGetPosition(motor));
-                        }
+						if (!allow_reversed)
+						{
+							current_dir = 1;
+						}
+
+						current_row = 0;
+						if (current_dir > 0)
+						{
+							current_col = 0;
+						}
+						else
+						{
+							current_col = max_cols;
+						}
+
+						if ((SM_MOTOR_1 & motors) != 0)
+						{
+							int32_t pan_steps = eep_params.mode_pano_position_start.pos[1]
+							+ current_col * steps[1]
+							- lSmGetPosition(1);
+							ucSmMove(1, pan_steps);
+						}
+						if ((SM_MOTOR_2 & motors) != 0)
+						{
+							int32_t tilt_steps = eep_params.mode_pano_position_start.pos[2]
+							+ current_row * steps[2]
+							- lSmGetPosition(2);
+							ucSmMove(2, tilt_steps);
+						}
 
                         state = MODE_PANO_STATE_WAIT_PAUSE;
                         SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PAUSE\n");
@@ -347,15 +404,20 @@ static void prvModePanoControlCallback(void *pvParameters)
             break;
         case MODE_PANO_STATE_MOVE:
             {
-                int32_t pan_steps = eep_params.mode_pano_position_start.pos[1] 
-                    + current_col * steps[1] 
-                    - lSmGetPosition(1);
-                int32_t tilt_steps = eep_params.mode_pano_position_start.pos[2]
-                    + current_row * steps[2]
-                    - lSmGetPosition(2);
-
-                ucSmMove(1, pan_steps);
-                ucSmMove(2, tilt_steps);
+				if ((SM_MOTOR_1 & motors) != 0)
+				{
+					int32_t pan_steps = eep_params.mode_pano_position_start.pos[1]
+						+ current_col * steps[1]
+						- lSmGetPosition(1);
+					ucSmMove(1, pan_steps);
+				}
+				if ((SM_MOTOR_2 & motors) != 0)
+				{
+	                int32_t tilt_steps = eep_params.mode_pano_position_start.pos[2]
+			            + current_row * steps[2]
+					    - lSmGetPosition(2);
+					ucSmMove(2, tilt_steps);
+				}
                 
                 state = MODE_PANO_STATE_WAIT_MOVE;
                 SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_MOVE\n");
@@ -364,7 +426,7 @@ static void prvModePanoControlCallback(void *pvParameters)
         case MODE_PANO_STATE_WAIT_MOVE:
             {
                 bool all_stoped = true;
-                for (uint8_t motor = 1; motor <= 2; motor++)
+                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                 {
                     if (ucSmGetState(motor) != SM_STATE_STOP)
                     {
@@ -392,8 +454,6 @@ static void prvModePanoControlCallback(void *pvParameters)
                     }
                     state = MODE_PANO_STATE_WAIT_PRE_TIME;
                     SEGGER_RTT_printf(0, "ModePano Control State Change: WAIT_PRE_TIME\n");
-					current_row = 0;
-					current_col = 0;
                     step_timer = 0;
                     pause_timer = 0;
                 }
@@ -401,7 +461,7 @@ static void prvModePanoControlCallback(void *pvParameters)
             break;
         case MODE_PANO_STATE_SLEEP_SM:
             {
-                for (uint8_t motor = 1; motor <= 2; motor++)
+                for (uint8_t motor = 0; motor < SM_MOTORS_USED; motor++)
                 {
                     if (eep_params.sm[motor].power_save == 1) vSmEnable(motor, 0);
                 }
