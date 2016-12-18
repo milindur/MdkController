@@ -102,7 +102,7 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 						float_t gear_reduction = 0;
 						memcpy(&gear_reduction, &tmp, 4);
 
-						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %f / %f\n", dir, gear_reduction, factor);
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %d / %d\n", dir, (int32_t)(gear_reduction*1000.0), (int32_t)(factor*1000.0));
 						vModeAstroStart(motor_mask, dir, gear_reduction, factor);
 					}
 					else if (data_length == 4)
@@ -132,14 +132,14 @@ bool bBleProcessMoCoControlPointRxMain(uint8_t cmd, uint8_t * data, uint8_t data
 								gear_reduction = SM_GEAR_REDUCTION_NICOTILT;
 								break;
 						}
-						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %f / %f\n", dir, gear_reduction, factor);
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %d / %d\n", dir, (int32_t)(gear_reduction*1000.0), (int32_t)(factor*1000.0));
 						vModeAstroStart(motor_mask, dir, gear_reduction, factor);
 					}
 					else if (data_length == 2)
 					{
 						uint8_t dir = data[0] == 0 ? MODE_ASTRO_DIR_NORTH : MODE_ASTRO_DIR_SOUTH;
 						float_t factor = data[1] == 0 ? SM_ASTRO_SIDEREAL_FACTOR : SM_ASTRO_LUNAR_FACTOR;
-						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %f\n", dir, factor);
+						SEGGER_RTT_printf(0, "MoCoBus Control RX: Start Program - Start Astro %d / %d\n", dir, (int32_t)(factor*1000.0));
 						vModeAstroStart(1, dir, SM_GEAR_REDUCTION_MDKv5, factor);
 					}
 					else if (data_length == 1)

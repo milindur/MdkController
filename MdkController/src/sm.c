@@ -419,7 +419,7 @@ bool bSmMoveContinuousAstro(uint8_t motor, uint8_t dir, float_t gear_reduction, 
     int32_t astro_speed = ASTRO_SPEED(gear_reduction, factor);
     uint32_t astro_step_delay = ASTRO_STEP_DELAY(gear_reduction, factor);
 
-    SEGGER_RTT_printf(0, "move cont astro [%d]: dir=%d, gear=%.2f, factor=%.4f, speed=%d, delay=%d\n", motor, dir, gear_reduction, factor, astro_speed, astro_step_delay);
+    SEGGER_RTT_printf(0, "move cont astro [%d]: dir=%d, gear=%d, factor=%d, speed=%d, delay=%d\n", motor, dir, (int32_t)(gear_reduction*1000.0), (int32_t)(factor*1000.0), astro_speed, astro_step_delay);
 
     if (dir == SM_CW)
     {
