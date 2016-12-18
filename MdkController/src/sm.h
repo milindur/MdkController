@@ -34,6 +34,11 @@
 #define SM_ASTRO_SIDEREAL_FACTOR    (0.99726958)
 #define SM_ASTRO_LUNAR_FACTOR       (1.03387012)
 
+#define SM_MOTOR(m)			(1<<m)
+#define SM_MOTOR_0			SM_MOTOR(0)
+#define SM_MOTOR_1			SM_MOTOR(1)
+#define SM_MOTOR_2			SM_MOTOR(2)
+#define SM_MOTOR_ALL		(SM_MOTOR_0|SM_MOTOR_1|SM_MOTOR_2)
 #define SM_MOTORS_USED      3
 
 #define SM_CW               1
