@@ -1,7 +1,7 @@
 #ifndef _VERSION_H_
 #define _VERSION_H_
 
-#define versionDEVICE_NAME_DEFAULT      "MDK v17    "
+#define versionDEVICE_NAME_DEFAULT      "MDKv6 v17  "
 #define versionFIRMWARE_VERSION_STRING  "v17"
 #define versionFIRMWARE_VERSION         44
 

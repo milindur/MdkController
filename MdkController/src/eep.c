@@ -17,25 +17,25 @@ const eep_params_t eep_params_def = {
     .ble_device_name = versionDEVICE_NAME_DEFAULT,
     .sm[0] = {
         .microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEALTH | SM_MODE_STEPS_DEFAULT,
-        .accel_steps = 10*SM_SPR,
-        .decel_steps = 10*SM_SPR,
-        .speed_max_steps = 6*SM_SPR,
+        .accel_steps = 8*SM_SPR,
+        .decel_steps = 8*SM_SPR,
+        .speed_max_steps = 5*SM_SPR,
         .motor_reverse = 0,
         .power_save = 2
     },
     .sm[1] = {
         .microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEALTH | SM_MODE_STEPS_DEFAULT,
-        .accel_steps = 7*SM_SPR,
-        .decel_steps = 7*SM_SPR,
-        .speed_max_steps = 5*SM_SPR,
+        .accel_steps = 5*SM_SPR,
+        .decel_steps = 5*SM_SPR,
+        .speed_max_steps = 4*SM_SPR,
         .motor_reverse = 0,
         .power_save = 2
     },
     .sm[2] = {
         .microstep_mode = SM_MODE_INTERPOLATION | SM_MODE_STEALTH | SM_MODE_STEPS_DEFAULT,
-        .accel_steps = 7*SM_SPR,
-        .decel_steps = 7*SM_SPR,
-        .speed_max_steps = 5*SM_SPR,
+        .accel_steps = 5*SM_SPR,
+        .decel_steps = 5*SM_SPR,
+        .speed_max_steps = 4*SM_SPR,
         .motor_reverse = 0,
         .power_save = 2
     },
